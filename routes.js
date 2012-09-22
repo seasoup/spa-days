@@ -1,0 +1,67 @@
+var chat        = require( './lib/chat.js' ),
+    crud        = require( './lib/crud.js' )
+    ;
+
+module.exports = function( app ) {
+  var routes = {
+    set: function () {
+
+      app.all( '/:object/*?', function ( req, res, next ) {
+        var valid_object_type = !!crud.schema_map[ req.params.object ];
+        
+        res.contentType( 'json' );
+        if ( valid_object_type ) {
+          next();
+        } else {
+          res.send( req.params.object + " is not a valid object type" );
+        }
+      });
+
+      app.get( '/:object/list', function ( req, res ) {
+        crud.read( req.params.object, {}, function ( result ) {
+          res.send( result );
+        });
+      });
+
+      app.post( '/:object/create', function ( req, res ) {
+        crud.create( req.params.object, req.body, function ( result ) {
+          res.send( result );
+        });
+      });
+
+      app.get( '/:object/read/:id', function ( req, res ) {
+        var find_map = { _id: ObjectID( req.params.id ) };
+
+        crud.read( req.params.object, find_map, function ( err, result ) {
+          res.send( result );
+        });
+      });
+
+      app.post( '/:object/update/:id', function ( req, res ) {
+        var find_map    = { _id: ObjectID( req.params.id ) },
+            object_map  = req.body,
+            object_type = req.params.object;
+
+        crud.update( object_type, find_map, object_map, function ( result ) {
+          res.send( result );
+        });
+      });
+
+      app.get( '/:object/delete/:id', function ( req, res ) {
+        var object_map = { _id: ObjectID( req.params.id ) };
+
+        crud.delete( req.params.object, object_map, function ( result ) {
+          res.send( result );
+        });
+      });
+
+      app.get( '/', function (req, res) {
+        res.redirect( '/spa.html' );
+      });
+    }
+  }
+
+  chat.connect( app, crud );
+
+  return routes;
+};
