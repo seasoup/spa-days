@@ -17,7 +17,13 @@
 
 var spa = (function () {
   var initModule = function ( $container ){
-    spa.shell.initModule( $container );
+    try {
+      spa.model.initModule();
+      spa.shell.initModule( $container );
+    }
+    catch ( error ) {
+      console.error('spa.js caught exception', error );
+    }
   };
   return { initModule: initModule };
 }());

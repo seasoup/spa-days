@@ -23,7 +23,7 @@ spa.shell = (function () {
         chat  : { opened : true, closed : true }
       },
       resize_interval : 200,
-      main_html : ''
+      main_html : String()
         + '<div class="spa-shell-head">'
           + '<div class="spa-shell-head-logo"></div>'
           + '<div class="spa-shell-head-acct"></div>'
@@ -37,15 +37,17 @@ spa.shell = (function () {
         + '<div class="spa-shell-modal"></div>'
     },
     stateMap  = {
+      sio         : null,
       $container  : undefined,
       anchor_map  : {},
-      resize_idto : undefined,
+      resize_idto : undefined
     },
     jqueryMap = {},
 
     copyAnchorMap,    setJqueryMap,   openChat,
     changeAnchorPart, onChangeAddress,
-    setChatAnchor,    initModule;
+    setChatAnchor,    initModule,     onResize
+    ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
   //------------------- BEGIN UTILITY METHODS ------------------
@@ -254,20 +256,20 @@ spa.shell = (function () {
     });
 
     // configure and initialize feature modules
-    spa.socket.initModule();
+    stateMap.sio = spa.model.getSio();
     
     spa.chat.configModule({
       set_chat_anchor : setChatAnchor,
       person_user     : spa.model.personUser,
       chat_model      : spa.model.chatModel
     });
-    spa.chat.initModule(jqueryMap.$container);
+    spa.chat.initModule(jqueryMap.$container, stateMap.sio);
     
     // configure and initialize the chat list
     spa.chatlist.configModule({
       set_chat_anchor : setChatAnchor
     });
-    spa.chatlist.initModule( jqueryMap.$container );
+    spa.chatlist.initModule( jqueryMap.$container, stateMap.sio );
 
     // Handle URI anchor change events.
     // This is done /after/ all feature modules are configured

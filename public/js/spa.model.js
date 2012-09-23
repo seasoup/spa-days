@@ -10,9 +10,48 @@
   white  : true
 */
 
-/*global $, spa */
+/*global $, spa, io */
 
-spa.model = ( function (){
-  return {};
+spa.model = (function (){
+  var
+    stateMap = { sio : null },
+    makeSio, getSio, initModule
+    ;
+
+  makeSio = function (){
+    var emit, initModule, my_name, on, socket;
+
+    socket = io.connect( 'http://localhost:3000/chat' );
+
+    emit = function ( namespace, data ) {
+      socket.emit( namespace, data );
+    };
+    
+    on = function ( namespace, callback ) {
+      socket.on( namespace, function ( ){
+        callback( arguments );
+      });
+    };
+
+    return {
+      emit      : emit,
+      on        : on,
+      socket    : socket
+    };
+  };
+
+  getSio = function (){
+    if ( ! stateMap.io ) {
+      stateMap.sio = makeSio;
+    }
+    return stateMap.sio;
+  };
+
+  initModule = function (){};
+
+  return {
+    getSio      : getSio,
+    initModule : initModule
+  };
 }());
 

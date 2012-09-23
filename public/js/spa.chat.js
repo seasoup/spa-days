@@ -19,7 +19,7 @@ spa.chat = (function () {
   //---------------- BEGIN MODULE SCOPE VARIABLES --------------
   var
     configMap = {
-      main_html    : ''
+      main_html    : String()
         + '<div class="spa-chat">'
           + '<div class="spa-chat-head">'
             + '<div class="spa-chat-head-toggle">+</div>'
@@ -67,6 +67,7 @@ spa.chat = (function () {
       set_chat_anchor : null
     },
     stateMap  = {
+      sio : null,
       $append_target   : null,
       position_type    : 'closed',
       px_per_em        : 0,
@@ -76,9 +77,10 @@ spa.chat = (function () {
     },
     jqueryMap = {},
 
-    setJqueryMap, setSliderPosition, onClickToggle, onChatSend,
-    configModule, initModule, removeSlider, handleResize, writeChat,
-    comment, clear, me, chatee
+    setJqueryMap, setPxSizes, setSliderPosition, onClickToggle,
+    onChatSend, configModule, initModule, removeSlider,
+    handleResize, writeChat, comment, clear, me, chatee,
+    setMe, setChatee
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
@@ -223,8 +225,8 @@ spa.chat = (function () {
   onChatSend = function ( message ) {
     jqueryMap.$input.val( '' );
     writeChat( me, message );
-    spa.socket.emit( 'chat', { chatee: chatee, user: me, message: message } );
-  }
+    stateMap.sio.emit( 'chat', { chatee: chatee, user: me, message: message } );
+  };
   //-------------------- END EVENT HANDLERS --------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
@@ -296,9 +298,12 @@ spa.chat = (function () {
   //
   // Throws     : none
   //
-  initModule = function ( $append_target ) {
-    $append_target.append( configMap.main_html );
+  initModule = function ( $append_target, sio ) {
+
     stateMap.$append_target = $append_target;
+    stateMap.sio = sio;
+
+    $append_target.append( configMap.main_html );
     setJqueryMap();
     setPxSizes();
 
@@ -310,8 +315,8 @@ spa.chat = (function () {
       onChatSend( jqueryMap.$input.val() );
       return false;
     });
-    
-    spa.socket.on( 'updatechat', function ( data ) {
+
+    sio.on( 'updatechat', function ( data ) {
       setChatee( data[ 0 ] );
       writeChat( data[ 0 ], data[ 1 ] );
     });

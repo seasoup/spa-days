@@ -19,7 +19,7 @@ spa.chatlist = (function () {
   //---------------- BEGIN MODULE SCOPE VARIABLES --------------
   var
     configMap = {
-      main_html    : ''
+      main_html    : String()
         + '<div class="spa-chatlist">'
           + '<div class="spa-chatlist-head">'
             + '<div class="spa-chatlist-head-toggle">'
@@ -41,12 +41,13 @@ spa.chatlist = (function () {
 
       set_chat_anchor : null
     },
-    stateMap  = {},
+    stateMap  = { sio : null },
     jqueryMap = {},
     personList = [],
 
     announceUserLeft, configModule, initModule, me, onLeaveChat, 
-    onNameClick, redrawPersonList, setJqueryMap, update, saveMe
+    onNameClick, redrawPersonList, setJqueryMap, update, saveMe,
+    socketOnUserChange
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
@@ -61,7 +62,7 @@ spa.chatlist = (function () {
       },
       success: callback
     });
-  }
+  };
 
   //-------------------- END UTILITY METHODS -------------------
 
@@ -100,28 +101,24 @@ spa.chatlist = (function () {
     personList.sort( alphabetical_sort );
     
     for ( a = 0; a < personList.length; a++ ) {
-      listHtml += ''
+      listHtml += String()
         + '<div class="spa-chatlist-name">' 
           + personList[ a ] 
         + '</div>';
     }
     if ( personList.length === 0 ) {
-      listHtml =  ''
+      listHtml = String()
         + 'To chat alone is the fate of all great souls<br><br>'
         + 'No one is online';
     }
     jqueryMap.$names.html( listHtml );
-
-
-  }
-
+  };
   //---------------------- END DOM METHODS ---------------------
 
   //------------------- BEGIN EVENT HANDLERS -------------------
-
   socketOnUserChange = function ( response ) {
-    var people_list = [];
-    for ( var a = 0; a < response[0].length; a++ ) {
+    var a, people_list = [];
+    for ( a = 0; a < response[0].length; a++ ) {
       if (response[ 0 ][ a ].name ) {
         people_list.push( response[0][ a ].name );
       }
@@ -145,13 +142,11 @@ spa.chatlist = (function () {
   };
 
   onLeaveChat = function () {
-    spa.socket.emit( 'leavechat', spa.chatlist.me );
+    stateMap.sio.emit( 'leavechat', spa.chatlist.me );
   };
-
   //-------------------- END EVENT HANDLERS --------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
-
   configModule = function ( input_map ) {
     spa.util.setConfigMap({
       input_map    : input_map,
@@ -161,21 +156,22 @@ spa.chatlist = (function () {
     return true;
   };
 
-  initModule = function ( $append_target ) {
-    $append_target.append( configMap.main_html );
+  initModule = function ( $append_target, sio ) {
     stateMap.$append_target = $append_target;
-    setJqueryMap();
-    setPxSizes();
+    stateMap.sio = sio;
 
-    spa.socket.on( 'userchange', socketOnUserChange );
-    spa.socket.on( 'userleft',   announceUserLeft );
+    $append_target.append( configMap.main_html );
+    setJqueryMap();
+
+    stateMap.sio.on( 'userchange', socketOnUserChange );
+    stateMap.sio.on( 'userleft',   announceUserLeft );
 
     spa.chatlist.me = prompt( "What's your name?" );
     saveMe( function ( response ) {
 //      console.log( response );
     });
     spa.chat.setMe( spa.chatlist.me );
-    spa.socket.emit( 'adduser',  spa.chatlist.me );
+    stateMap.sio.emit( 'adduser',  spa.chatlist.me );
 
     jqueryMap.$names.on( 'click', '.spa-chatlist-name', onNameClick);
     $( window ).bind( 'beforeunload', onLeaveChat );
@@ -192,4 +188,3 @@ spa.chatlist = (function () {
   };
   //------------------- END PUBLIC METHODS ---------------------
 }());
-
