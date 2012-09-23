@@ -1,6 +1,6 @@
 /*
- *   spa.model.js
- *   Model module
+ *   spa.data.js
+ *   data module
 */
 
 /*jslint         browser : true, continue : true,
@@ -12,7 +12,7 @@
 
 /*global $, spa, io */
 
-spa.model = (function (){
+spa.data = (function (){
   var
     stateMap = { sio : null },
     makeSio, getSio, initModule

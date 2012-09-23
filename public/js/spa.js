@@ -18,6 +18,7 @@
 var spa = (function () {
   var initModule = function ( $container ){
     try {
+      spa.data.initModule();
       spa.model.initModule();
       spa.shell.initModule( $container );
     }

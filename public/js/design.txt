@@ -1,0 +1,84 @@
+What we want:
+
+FEATURE MODULE LEVEL
+
+We should prefer to use an abstracted inteface from the model,
+with perhaps the Shell maintaining and coordinating any global chat artifacts.
+Perhaps:
+
+  chat_room = model.chat.createChatRoom({ name : 'fred' });
+  chat_room.add$Input($input_field);
+  chat_room.add$Output($output_field);
+
+One downside to the above implementation I see is it is DOM dependent,
+which I abhor.  Perhaps better to use callbacks?
+
+  chat_room = mode.chat.createChatRoom({ name : 'fred' });
+  chat_room.add_received_callback( onChatMessage ); // DOM method
+  // and then to send a message, typically in a DOM event handler:
+  chat_root.send(...); // also wrapped in an event handler
+
+Now the only problem with /this/ approach is that the callback doesn't get
+automatically unbound (grrr).  That's not necessarily a bad thing.
+To destroy a chat room and all its bound handlers:
+
+  chat_room.destroy();
+
+There is some question of the concept of chat rooms, which we can discuss.
+It may be that only a single chatroom is supported in our implementation.
+Will need to explore.
+
+NOTES FOR MODEL
+
+Global event have greatly improved over the last year in performance.  See
+http://stackoverflow.com/questions/3162748/jquery-global-events-and-performance.
+There is no good reason not to use them.
+
+When message is received for a user, a global event is emitted by the sio
+object which contains the chatroom, message, user, and timestamp.
+Add the namespace prefix to the event! - spa_model_message, or something like that.
+
+The onMessage handler would pick up the event and then direct
+output to the correct elements or callbacks registered for onMessage
+consideration.
+
+VARIOUS CLIENT CODE CONCEPTS
+
+  // for model: code to clean out output or input lists
+  var revised_list = [], $field;
+  FIELD:
+  for ( i = 0; i < field_$list.length; i++ ){
+    $field = field_$list[i];
+    if ( $field.closest('body') === 0 ){ continue FIELD; }
+    revise_list.push( $field );
+  }
+  // and revised_list now has all existant elements
+
+When user types in a message and presses return, we get an on-submit event and
+we can send the message with model.chat.send(...);
+Use event.which for keyboard events:
+
+  var onKeypress = function( event ) {
+    var
+      $input_field = $(this),
+      input_text   = $input_field.val().trim()
+      ;
+
+    // Look for enter keycode
+    // Note which deprecates keyCode, as it is normalized
+    // if ( ( event.keyCode === 13 ) && input_text ){
+    if ( ( event.which === 13 ) && input_text ){
+      // do not send message if we are an anonymous user
+      if ( model.user.isVisitor() ){
+        stateMap.cb_is_visitor(model.user);
+      }
+      else {
+        model.chat.send(
+          input_text,
+          function (){ $input_field.val(''); } // callback on send
+        );
+      }
+    }
+  };
+
+
