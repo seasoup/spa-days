@@ -15,42 +15,43 @@
 spa.data = (function (){
   var
     stateMap = { sio : null },
-    makeSio, getSio, initModule
+    makeSio, getSio, clearSio, initModule
     ;
 
   makeSio = function (){
-    var emit, initModule, my_name, on, socket;
+    var emit, on, socket;
 
     socket = io.connect( 'http://localhost:3000/chat' );
-
-    emit = function ( namespace, data ) {
-      socket.emit( namespace, data );
-    };
-    
-    on = function ( namespace, callback ) {
-      socket.on( namespace, function ( ){
-        callback( arguments );
-      });
-    };
-
     return {
-      emit      : emit,
-      on        : on,
-      socket    : socket
+      emit : function ( namespace, data ) {
+        socket.emit( namespace, data );
+      },
+      on : function ( namespace, callback ) {
+        socket.on( namespace, function (){
+          callback( arguments );
+        });
+      }
     };
   };
 
   getSio = function (){
-    if ( ! stateMap.io ) {
-      stateMap.sio = makeSio;
+    if ( ! stateMap.sio ) {
+      stateMap.sio = makeSio();
     }
     return stateMap.sio;
+  };
+  clearSio = function (){
+    if ( stateMap.sio ){
+      stateMap.sio.disconnect();
+      stateMap.sio = null;
+    }
   };
 
   initModule = function (){};
 
   return {
     getSio      : getSio,
+    clearSio    : clearSio,
     initModule : initModule
   };
 }());
