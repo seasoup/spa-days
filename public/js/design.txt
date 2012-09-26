@@ -21,18 +21,6 @@ always be independent from the DOM.  Therefore, we will want to use callbacks.
   spa.model.disconnect();
 
 
-
-  chat_room = mode.chat.createChatRoom({ name : 'fred' });
-  chat_room.add_received_callback( onChatMessage ); // DOM method
-  // and then to send a message, typically in a DOM event handler:
-  chat_root.send(...); // also wrapped in an event handler
-
-Now the only problem with /this/ approach is that the callback doesn't get
-automatically unbound (grrr).  That's not necessarily a bad thing.
-To destroy a chat room and all its bound handlers:
-
-  chat_room.destroy();
-
 There is some question of the concept of chat rooms, which we can discuss.
 It may be that only a single chatroom is supported in our implementation.
 Will need to explore.

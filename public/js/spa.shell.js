@@ -256,13 +256,14 @@ spa.shell = (function () {
     });
 
     // configure and initialize feature modules
-    stateMap.sio = spa.model.getSio();
+    stateMap.sio = spa.data.getSio();
     
     spa.chat.configModule({
       set_chat_anchor : setChatAnchor,
       person_user     : spa.model.personUser,
       chat_model      : spa.model.chatModel
     });
+
     spa.chat.initModule(jqueryMap.$container, stateMap.sio);
     
     // configure and initialize the chat list

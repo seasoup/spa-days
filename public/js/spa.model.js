@@ -16,34 +16,62 @@ spa.model = (function (){
   var
     configMap = { id_anon : 0 },
     stateMap = {
-      user        : null,
-      anon_user   : null
+      user         : null,
+      user_map_cid : [], // TODO use taffy here
+      user_map_id  : [], // TODO use taffy here
+      anon_user    : null,
+      cid_serial   : 0
     },
 
-    people, chat,
+    makeCid, people, chat,
     initModule
     ;
 
+  makeCid = function () { return 'c' + String(stateMap.cid++); };
+
   people = {
-    makePerson : function ( person_id, person_name ){
-      return {
-        getPersonId   : function (){ return person_id; },
-        getPersonName : function (){ return person_name; },
-        is_user       : function (){ return person_id === stateMap.user.getPersonId(); },
-        is_anon       : function (){ return person_id === configMap.id_anon; }
+    makePerson : function ( arg_map ){
+      var person,
+        cid  = arg_map.cid,
+        id   = arg_map.id,
+        name = arg_map.name;
+
+      if ( ! cid || ! name ){ throw 'client id and name required'; }
+
+      person = {
+        cid  : arg_map.cid,
+        id   : arg_map.id,
+        name : arg_map.name,
+        is_user : function (){ return cid === stateMap.user.cid; },
+        is_anon : function (){ return cid === configMap.id_anon; }
       };
+
+      stateMap.user_map_cid[cid] = person; // TODO use taffy here
+      stateMap.user_map_id[id]   = person; // TODO use taffy here
     },
-    createUser : function ( ){
-      stateMap.user = this.makePerson( arguments );
+
+    createUser : function ( uname ){
+      stateMap.user = this.makePerson({
+        uname : uname,
+        cid   : makeCid()
+      });
+      spa.data.createUser(
+        uname,
+        function ( response ){
+          stateMap.user.id  = response._id;
+        }
+      );
     },
+
     getUser : function (){ return stateMap.user; },
+
     clearUser : function (){
       stateMap.user = stateMap.anon_user;
       return true;
     }
   };
 
-  chat = function (){
+  chat = (function (){
     var sio, chatee, callback_map, clear_callback_map, process_event;
 
     clear_callback_map = function (){
@@ -62,7 +90,7 @@ spa.model = (function (){
       // as the argument. We might consider cleaning up some of the
       // event data before passing it back to the callbacks.
       // not sure if the names are right, but like so:
-      
+
        var i, callback,
          event_type = event.type || '',
          callback_list = callback_map[ event_type ];
@@ -82,33 +110,38 @@ spa.model = (function (){
         }
 
         sio = spa.data.getSio();
-        sio.emit('adduser', stateMap.user.getPersonId());
+        sio.emit( 'adduser', stateMap.user.name);
+
         sio.on( 'userchange', process_event );
         sio.on( 'userleft',   process_event );
         sio.on( 'updatechat', process_event );
       },
+
       set_chatee : function ( chatee_id, chatee_name ){
-        chatee = people.makePerson( arguments );
+        chatee = people.makePerson( chatee_name );
       },
+
       leave : function (){
         if ( sio ){
           if ( ! stateMap.user.is_anon ){
-            sio.emit( 'leavechat', stateMap.user.getPersonId() );
+            sio.emit( 'leavechat', stateMap.user.name );
           }
           spa.data.clearSio();
           clear_callback_map();
         }
       },
+
       send : function ( msg_text ){
         if ( stateMap.user && chatee ){
           // TODO adjust these names to chatee_id, user_id, msg_text
           sio.emit( 'chat', {
-            chatee  : chatee.getPersonId(),
-            user    : stateMap.user.getPersonId(),
+            chatee  : chatee.name,
+            user    : stateMap.user.name,
             message : msg_text
           });
         }
       },
+
       add_callback : function ( event_type, callback ){
         var i, callback_list = callback_map [ event_type ];
 
@@ -122,8 +155,9 @@ spa.model = (function (){
         callback_list.push( callback );
         return true;
       },
+
       remove_callback : function ( event_type, callback ){
-        var i, new_list = [], 
+        var i, new_list = [],
           callback_list = callback_map [ event_type ];
 
         if ( ! callback_list ){ throw 'invalid event_type'; }
@@ -135,17 +169,21 @@ spa.model = (function (){
         callback_map[ event_type ] = new_list;
         return true;
       },
+
       clear_callback_type : function ( event_type ){
         var callback_list = callback_map[ event_type ];
         if ( ! callback_list ){ throw 'invalid event_type'; }
         callback_map[ event_type ] = [];
       }
     };
-
-  };
+  }());
 
   initModule = function (){
-    stateMap.anon_user = people.makePerson( 'anonymous', stateMap.id_anon );
+    stateMap.anon_user = people.makePerson( {
+      uname : 'anonymous',
+      cid   : makeCid(),
+      id    : stateMap.id_anon
+    });
   };
 
   return {

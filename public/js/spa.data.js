@@ -15,8 +15,17 @@
 spa.data = (function (){
   var
     stateMap = { sio : null },
-    makeSio, getSio, clearSio, initModule
+    createUser, makeSio, getSio, clearSio, initModule
     ;
+
+  createUser = function ( username, callback ) {
+    $.ajax({
+      url : '/users/create',
+      type : 'post',
+      data : { name : username },
+      success : callback
+    });
+  };
 
   makeSio = function (){
     var emit, on, socket;
@@ -50,8 +59,9 @@ spa.data = (function (){
   initModule = function (){};
 
   return {
-    getSio      : getSio,
-    clearSio    : clearSio,
+    getSio     : getSio,
+    clearSio   : clearSio,
+    createUser : createUser,
     initModule : initModule
   };
 }());

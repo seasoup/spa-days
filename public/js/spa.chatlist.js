@@ -45,24 +45,23 @@ spa.chatlist = (function () {
     jqueryMap = {},
     personList = [],
 
-    announceUserLeft, configModule, initModule, me, onLeaveChat, 
-    onNameClick, redrawPersonList, setJqueryMap, update, saveMe,
+    announceUserLeft, configModule, initModule, me, onBeforeunload,
+    onNameClick, redrawPersonList, setJqueryMap, update, // saveMe,
     socketOnUserChange
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
   //------------------- BEGIN UTILITY METHODS ------------------
-
-  saveMe = function ( callback ) {
-    $.ajax({
-      url: '/users/create',
-      type: 'post',
-      data: {
-        name: spa.chatlist.me
-      },
-      success: callback
-    });
-  };
+//  saveMe = function ( callback ) {
+//    $.ajax({
+//      url: '/users/create',
+//      type: 'post',
+//      data: {
+//        name: spa.chatlist.me
+//      },
+//      success: callback
+//    });
+//  };
 
   //-------------------- END UTILITY METHODS -------------------
 
@@ -82,28 +81,28 @@ spa.chatlist = (function () {
 
   };
   // End DOM method /setJqueryMap/
-  
+
   update = function ( newPersonList ) {
     personList = newPersonList;
     redrawPersonList();
   };
-  
+
   redrawPersonList = function () {
-    var listHtml='', 
+    var listHtml='',
       a, alphabetical_sort;
-      
+
     alphabetical_sort = function ( a, b ) {
       var first = a.toLowerCase(),
           last  = b.toLowerCase();
       return first < last ? -1 : 1;
     };
-    
+
     personList.sort( alphabetical_sort );
-    
+
     for ( a = 0; a < personList.length; a++ ) {
       listHtml += String()
-        + '<div class="spa-chatlist-name">' 
-          + personList[ a ] 
+        + '<div class="spa-chatlist-name">'
+          + personList[ a ]
         + '</div>';
     }
     if ( personList.length === 0 ) {
@@ -141,7 +140,7 @@ spa.chatlist = (function () {
     spa.chat.comment( 'You are chatting with ' + chatee + '.');
   };
 
-  onLeaveChat = function () {
+  onBeforeunload = function () {
     stateMap.sio.emit( 'leavechat', spa.chatlist.me );
   };
   //-------------------- END EVENT HANDLERS --------------------
@@ -167,14 +166,17 @@ spa.chatlist = (function () {
     stateMap.sio.on( 'userleft',   announceUserLeft );
 
     spa.chatlist.me = prompt( "What's your name?" );
-    saveMe( function ( response ) {
-//      console.log( response );
+
+    spa.data.createUser(
+      spa.chatlist.me,
+      function ( response ) { console.log( response );
     });
+
     spa.chat.setMe( spa.chatlist.me );
     stateMap.sio.emit( 'adduser',  spa.chatlist.me );
 
     jqueryMap.$names.on( 'click', '.spa-chatlist-name', onNameClick);
-    $( window ).bind( 'beforeunload', onLeaveChat );
+    $( window ).bind( 'beforeunload', onBeforeunload );
 
     return true;
   };
