@@ -18,11 +18,11 @@ spa.data = (function (){
     createUser, makeSio, getSio, clearSio, initModule
     ;
 
-  createUser = function ( username, callback ) {
+  createUser = function ( uname, callback ) {
     $.ajax({
-      url : '/users/create',
+      url  : '/users/create',
       type : 'post',
-      data : { name : username },
+      data : { name : uname },
       success : callback
     });
   };

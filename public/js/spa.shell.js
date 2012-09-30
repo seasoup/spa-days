@@ -44,9 +44,9 @@ spa.shell = (function () {
     },
     jqueryMap = {},
 
-    copyAnchorMap,    setJqueryMap,   openChat,
-    changeAnchorPart, onChangeAddress,
-    setChatAnchor,    initModule,     onResize
+    copyAnchorMap,    setJqueryMap,   changeAnchorPart,
+    onResize,         onHashchange,   onBeforeunload,
+    setChatAnchor,    initModule
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
@@ -134,7 +134,7 @@ spa.shell = (function () {
   //--------------------- END DOM METHODS ----------------------
 
   //------------------- BEGIN EVENT HANDLERS -------------------
-  // Begin Event handler /onChangeAddress/
+  // Begin Event handler /onHashchange/
   // Purpose    : Handles the address change event
   // Arguments  :
   //   * event - jQuery event object.
@@ -146,7 +146,7 @@ spa.shell = (function () {
   //   * Adjust the application only where proposed state
   //     differs from existing, and is allowed by anchor schema
   //
-  onChangeAddress = function ( event ) {
+  onHashchange = function ( event ) {
     var
       _s_chat_previous, _s_chat_proposed, s_chat_proposed,
       anchor_map_proposed,
@@ -200,7 +200,7 @@ spa.shell = (function () {
 
     return false;
   };
-  // End Event handler /onChangeAddress/
+  // End Event handler /onHashchange/
 
   // Begin Event handler /onResize/
   onResize = function (){
@@ -216,6 +216,9 @@ spa.shell = (function () {
   };
   // End Event handler /onResize/
 
+  // Begin Event handler /onBeforeunload/
+  onBeforeunload = function (){ spa.model.chat.leave(); };
+  // End Event handler /onBeforeunload/
   //-------------------- END EVENT HANDLERS --------------------
 
   //---------------------- BEGIN CALLBACKS ---------------------
@@ -282,8 +285,10 @@ spa.shell = (function () {
     // is considered on-load
     //
     $(window)
-      .bind( 'resize',     onResize  )
-      .bind( 'hashchange', onChangeAddress )
+      .bind( 'resize',       onResize  )
+      .bind( 'hashchange',   onHashchange )
+      // .bind( 'beforeunload', onBeforeunload )
+      .bind( 'resize', onBeforeunload )
       .trigger( 'hashchange' );
 
   };

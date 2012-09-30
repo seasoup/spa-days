@@ -51,7 +51,7 @@ spa.chatlist = (function () {
     jqueryMap = {},
     personList = [],
 
-    announceUserLeft, configModule, initModule, me, onBeforeunload,
+    announceUserLeft, configModule, initModule, me,
     onNameClick, redrawPersonList, setJqueryMap, update, // saveMe,
     socketOnUserChange
     ;
@@ -146,9 +146,11 @@ spa.chatlist = (function () {
     spa.chat.comment( 'You are chatting with ' + chatee + '.');
   };
 
-  onBeforeunload = function () {
-    stateMap.sio.emit( 'leavechat', spa.chatlist.me );
-  };
+  // See shell for this capability
+  //onBeforeunload = function () {
+  //  stateMap.chat_model.leave();
+  //  // stateMap.sio.emit( 'leavechat', spa.chatlist.me );
+  //};
   //-------------------- END EVENT HANDLERS --------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
@@ -162,7 +164,7 @@ spa.chatlist = (function () {
   };
 
   initModule = function ( $append_target, sio ) {
-    var user_name;
+    var uname, user;
     stateMap.$append_target = $append_target;
     stateMap.sio = sio;
 
@@ -172,20 +174,19 @@ spa.chatlist = (function () {
     stateMap.sio.on( 'userchange', socketOnUserChange );
     stateMap.sio.on( 'userleft',   announceUserLeft );
 
-    user_name = prompt( "What's your name?" );
+    uname = prompt( "What's your name?" );
 
-    spa.chatlist.me
+    user = configMap.people_model.create_user( uname );
+    spa.model.chat.join();
 
-    spa.data.createUser(
-      spa.chatlist.me,
-      function ( response ) { console.log( response );
-    });
-
-    spa.chat.setMe( spa.chatlist.me );
-    stateMap.sio.emit( 'adduser',  spa.chatlist.me );
+    // BEGIN TODO remove after refactor
+    spa.chatlist.me = uname;
+    spa.chat.setMe( spa.chatlist.me ); // TODO remove after refactor
+    stateMap.sio.emit( 'adduser',  spa.chatlist.me ); // TODO ditto
 
     jqueryMap.$names.on( 'click', '.spa-chatlist-name', onNameClick);
-    $( window ).bind( 'beforeunload', onBeforeunload );
+    // see shell for this capability
+    // $( window ).bind( 'beforeunload', onBeforeunload );
 
     return true;
   };

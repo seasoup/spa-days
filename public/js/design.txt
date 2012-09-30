@@ -7,7 +7,7 @@ with perhaps the Shell maintaining and coordinating any global chat artifacts.
 A key aspect of the implementation should be that data - model layers should
 always be independent from the DOM.  Therefore, we will want to use callbacks.
 
-  spa.model.people.createUser( <id>, <name> );
+  spa.model.people.create_user( <id>, <name> );
   spa.model.chat.join();
   spa.model.chat.set_chatee( 'fred' );
 

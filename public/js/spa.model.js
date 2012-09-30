@@ -16,7 +16,7 @@ spa.model = (function (){
   var
     configMap = { anon_id : 0 },
     stateMap = {
-      user         : null,
+      user           : null,
       people_db      : TAFFY(),
       people_cid_map : {}, // TODO use taffy here
       people_id_map  : {}, // TODO use taffy here
@@ -24,38 +24,48 @@ spa.model = (function (){
       cid_serial     : 0
     },
 
-    makeCid, people, chat,
+    personProto,makeCid, people, chat,
     initModule
     ;
 
-  makeCid = function () { return 'c' + String(stateMap.cid++); };
+  personProto = {
+    is_user : function (){ return this.cid === stateMap.user.cid; },
+    is_anon : function (){ return this.cid === configMap.anon_id; }
+  };
+
+  makeCid = function () { return 'c' + String(stateMap.cid_serial++); };
 
   people = {
-    makePerson : function ( arg_map ){
+    getPeopleDb : function (){ return stateMap.people_db; },
+    getPersonByCid : function ( cid ){
+      return stateMap.people_cid_map[ cid ];
+    },
+    getUser : function (){ return stateMap.user; },
+
+    make_person : function ( arg_map ){
       var person,
         cid  = arg_map.cid,
         id   = arg_map.id,
-        name = arg_map.uname;
+        uname = arg_map.uname;
 
-      if ( ! cid || ! name ){ throw 'client id and name required'; }
+      if ( ! cid || ! uname ){ throw 'client id and name required'; }
 
-      person = {
-        cid  : arg_map.cid,
-        id   : arg_map.id,
-        name : arg_map.uname,
-        is_user : function (){ return cid === stateMap.user.cid; },
-        is_anon : function (){ return cid === configMap.anon_id; }
-      };
+      person      = Object.create( personProto );
+      person.cid  = cid;
+      person.name = uname;
 
       stateMap.people_cid_map[ cid ] = person;
       if ( id ){
-        stateMap.people_id_map[ id ]   = person;
+        person.id = id;
+        stateMap.people_id_map[ id ] = person;
       }
-      stateMap.people_db.insert(person);
+
+      stateMap.people_db.insert( person );
+      return person;
     },
 
-    createUser : function ( uname ){
-      stateMap.user = this.makePerson({
+    create_user : function ( uname ){
+      stateMap.user = this.make_person({
         uname : uname,
         cid   : makeCid()
       });
@@ -63,13 +73,13 @@ spa.model = (function (){
       spa.data.createUser(
         uname,
         function ( response ){
-          stateMap.user.id  = response._id;
+          stateMap.user.id  = response[0]._id;
           stateMap.people_id_map[ stateMap.user.id ] = stateMap.user;
         }
       );
-    },
 
-    getUser : function (){ return stateMap.user; },
+      return stateMap.user;
+    },
 
     removePerson : function ( person ){
       if ( ! person ){ return false; }
@@ -119,22 +129,23 @@ spa.model = (function (){
 
           if ( id ){
             make_map.id  = id;
-            make_map.cid = cid;
+            make_map.cid = id;
           }
           else {
             make_map.cid = makeCid();
           }
-          people.makePerson(make_map);
+          people.make_person(make_map);
         }
       }
     };
 
     on_userleft = function ( response ){
+      console.warn( 'on_userleft', response);
       return true;
     };
 
     process_event = function ( event ){
-      console.warn( event );
+      console.warn( 'process_event', event );
       // we get the event type here and then
       // loop through and execute all the callbacks with event data
       // as the argument. We might consider cleaning up some of the
@@ -168,19 +179,20 @@ spa.model = (function (){
       },
 
       set_chatee : function ( chatee_id, chatee_name ){
-        chatee = people.makePerson({
+        chatee = people.make_person({
           uname : chatee_name,
           cid   : makeCid()
         });
       },
 
       leave : function (){
+        console.warn( sio, stateMap.user, stateMap.user.is_anon() );
         if ( sio ){
-          if ( ! stateMap.user.is_anon ){
+          if ( ! stateMap.user.is_anon() ){
             sio.emit( 'leavechat', stateMap.user.name );
           }
           spa.data.clearSio();
-          clear_callback_map();
+          // clear_callback_map(); // this may not be needed?
         }
       },
 
@@ -232,7 +244,7 @@ spa.model = (function (){
   }());
 
   initModule = function (){
-    stateMap.anon_user = people.makePerson({
+    stateMap.anon_user = people.make_person({
       uname : 'anonymous',
       cid   : makeCid(),
       id    : stateMap.anon_id
