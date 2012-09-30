@@ -10,17 +10,18 @@
   white  : true
 */
 
-/*global $, spa */
+/*global TAFFY, $, spa */
 
 spa.model = (function (){
   var
-    configMap = { id_anon : 0 },
+    configMap = { anon_id : 0 },
     stateMap = {
       user         : null,
-      user_map_cid : [], // TODO use taffy here
-      user_map_id  : [], // TODO use taffy here
-      anon_user    : null,
-      cid_serial   : 0
+      people_db      : TAFFY(),
+      people_cid_map : {}, // TODO use taffy here
+      people_id_map  : {}, // TODO use taffy here
+      anon_user      : null,
+      cid_serial     : 0
     },
 
     makeCid, people, chat,
@@ -34,20 +35,23 @@ spa.model = (function (){
       var person,
         cid  = arg_map.cid,
         id   = arg_map.id,
-        name = arg_map.name;
+        name = arg_map.uname;
 
       if ( ! cid || ! name ){ throw 'client id and name required'; }
 
       person = {
         cid  : arg_map.cid,
         id   : arg_map.id,
-        name : arg_map.name,
+        name : arg_map.uname,
         is_user : function (){ return cid === stateMap.user.cid; },
-        is_anon : function (){ return cid === configMap.id_anon; }
+        is_anon : function (){ return cid === configMap.anon_id; }
       };
 
-      stateMap.user_map_cid[cid] = person; // TODO use taffy here
-      stateMap.user_map_id[id]   = person; // TODO use taffy here
+      stateMap.people_cid_map[ cid ] = person;
+      if ( id ){
+        stateMap.people_id_map[ id ]   = person;
+      }
+      stateMap.people_db.insert(person);
     },
 
     createUser : function ( uname ){
@@ -55,33 +59,79 @@ spa.model = (function (){
         uname : uname,
         cid   : makeCid()
       });
+
       spa.data.createUser(
         uname,
         function ( response ){
           stateMap.user.id  = response._id;
+          stateMap.people_id_map[ stateMap.user.id ] = stateMap.user;
         }
       );
     },
 
     getUser : function (){ return stateMap.user; },
 
-    clearUser : function (){
+    removePerson : function ( person ){
+      if ( ! person ){ return false; }
+      // can't remove anonymous user
+      if ( person.id === configMap.anon_id ){
+        return false;
+      }
+
+      stateMap.people_db({ cid : person.cid }).remove();
+      delete stateMap.people_cid_map[ person.cid ];
+      if ( person.id ){
+        delete stateMap.people_cid_map[ person.id ];
+      }
+      return true;
+    },
+
+    removeUser : function (){
+      var is_removed, user = stateMap.user;
+      is_removed = this.removePerson( user );
+      if ( ! is_removed ){ return is_removed; }
       stateMap.user = stateMap.anon_user;
       return true;
     }
   };
 
   chat = (function (){
-    var sio, chatee, callback_map, clear_callback_map, process_event;
+    var clear_callback_map, on_userchange, on_userleft,
+      sio, chatee, callback_map, process_event
+      ;
 
     clear_callback_map = function (){
       callback_map = {
-        'userchange' : [],
-        'userleft'   : [],
+        'userchange' : [ on_userchange ],
+        'userleft'   : [ on_userleft ],
         'updatechat' : []
       };
     };
     clear_callback_map();
+
+    on_userchange = function( response ){
+      var i, id, cid, make_map;
+
+      for ( i = 0; i < response[0].length; i++ ) {
+        if (response[ 0 ][ i ].name ) {
+          id  = response[ 0 ]._id;
+          make_map = { uname : response[ 0 ][ i ] };
+
+          if ( id ){
+            make_map.id  = id;
+            make_map.cid = cid;
+          }
+          else {
+            make_map.cid = makeCid();
+          }
+          people.makePerson(make_map);
+        }
+      }
+    };
+
+    on_userleft = function ( response ){
+      return true;
+    };
 
     process_event = function ( event ){
       console.warn( event );
@@ -118,7 +168,10 @@ spa.model = (function (){
       },
 
       set_chatee : function ( chatee_id, chatee_name ){
-        chatee = people.makePerson( chatee_name );
+        chatee = people.makePerson({
+          uname : chatee_name,
+          cid   : makeCid()
+        });
       },
 
       leave : function (){
@@ -179,10 +232,10 @@ spa.model = (function (){
   }());
 
   initModule = function (){
-    stateMap.anon_user = people.makePerson( {
+    stateMap.anon_user = people.makePerson({
       uname : 'anonymous',
       cid   : makeCid(),
-      id    : stateMap.id_anon
+      id    : stateMap.anon_id
     });
   };
 

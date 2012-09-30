@@ -255,21 +255,24 @@ spa.shell = (function () {
       schema_map : configMap.anchor_schema_map
     });
 
-    // configure and initialize feature modules
+    // configure and initialize chat
+    // TODO 2012-09-28 mmikowski remove sio after move to DMSF update
     stateMap.sio = spa.data.getSio();
-    
     spa.chat.configModule({
       set_chat_anchor : setChatAnchor,
-      person_user     : spa.model.personUser,
-      chat_model      : spa.model.chatModel
+      people_model    : spa.model.people,
+      chat_model      : spa.model.chat
     });
+    // TODO 2012-09-28 mmikowski remove sio after move to DMSF update
+    spa.chat.initModule( jqueryMap.$container, stateMap.sio );
 
-    spa.chat.initModule(jqueryMap.$container, stateMap.sio);
-    
-    // configure and initialize the chat list
+    // configure and initialize chatlist
     spa.chatlist.configModule({
-      set_chat_anchor : setChatAnchor
+      set_chat_anchor : setChatAnchor,
+      people_model    : spa.model.people,
+      chat_model      : spa.model.chat
     });
+    // TODO 2012-09-28 mmikowski remove sio after move to DMSF update
     spa.chatlist.initModule( jqueryMap.$container, stateMap.sio );
 
     // Handle URI anchor change events.

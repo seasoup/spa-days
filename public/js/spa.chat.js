@@ -49,7 +49,7 @@ spa.chat = (function () {
         slider_closed_title : true,
 
         chat_model      : true,
-        person_user     : true,
+        people_model    : true,
         set_chat_anchor : true
       },
 
@@ -63,7 +63,7 @@ spa.chat = (function () {
       window_height_min_em : 20,
 
       chat_model      : null,
-      person_user     : null,
+      people_model    : null,
       set_chat_anchor : null
     },
     stateMap  = {
@@ -221,7 +221,7 @@ spa.chat = (function () {
     }
     return false;
   };
-  
+
   onChatSend = function ( message ) {
     jqueryMap.$input.val( '' );
     writeChat( me, message );
@@ -311,7 +311,7 @@ spa.chat = (function () {
     jqueryMap.$toggle.attr( 'title', configMap.slider_closed_title );
     jqueryMap.$head.click( onClickToggle );
     stateMap.position_type = 'closed';
-    jqueryMap.$form.submit( function () { 
+    jqueryMap.$form.submit( function () {
       onChatSend( jqueryMap.$input.val() );
       return false;
     });
@@ -325,16 +325,16 @@ spa.chat = (function () {
   };
   // End public method /initModule/
 
-  // Begin public method /removeSlider/ 
-  // Purpose    : 
+  // Begin public method /removeSlider/
+  // Purpose    :
   //   * Removes chatSlider DOM element
   //   * Reverts to initial state
   //   * Removes pointers to callbacks and other data
   // Arguments  : none
   // Returns    : true
   // Throws     : none
-  //  
-  removeSlider = function () { 
+  //
+  removeSlider = function () {
     // unwind initialization and state
     // remove DOM container; this removes event bindings too
     if ( jqueryMap.$slider ) {
@@ -343,31 +343,31 @@ spa.chat = (function () {
     }
     stateMap.$append_target = null;
     stateMap.position_type  = 'closed';
-    
+
     // unwind key configurations
     configMap.chat_model      = null;
-    configMap.person_user     = null;
+    configMap.people_model    = null;
     configMap.set_chat_anchor = null;
 
     return true;
-  };  
+  };
   // End public method /removeSlider/
 
-  // Begin public method /handleResize/ 
-  // Purpose    : 
+  // Begin public method /handleResize/
+  // Purpose    :
   //   Given a window resize event, adjust the presentation
   //   provided by this module if needed
   // Arguments  :
   //   * window_width  - the new window width
-  //   * window_height - then new window height 
+  //   * window_height - then new window height
   // Actions    :
   //   If the window height or width falls below
   //   a given threshold, resize the chat slider for the
   //   reduced window size.
   // Returns    : true
   // Throws     : none
-  //  
-  handleResize = function () { 
+  //
+  handleResize = function () {
     // don't do anything if we don't have a slider container
     if ( ! jqueryMap.$slider ) { return false; }
     setPxSizes();
@@ -375,25 +375,25 @@ spa.chat = (function () {
       jqueryMap.$slider.css({ height : stateMap.slider_opened_px });
     }
     return true;
-  }; 
+  };
   // End public method /handleResize/
 
   writeChat = function ( user, text ) {
     jqueryMap.$msgs.append( user + ': ' + text + '<br>');
   };
-  
+
   comment = function ( text ) {
     jqueryMap.$msgs.append( '<i>' + text + '</i><br>');
   };
-  
+
   clear = function () {
     jqueryMap.$msgs.empty();
   };
-  
+
   setMe = function ( name ) {
     me = name;
   };
-  
+
   setChatee = function ( name ) {
     chatee = name;
   };
@@ -404,6 +404,8 @@ spa.chat = (function () {
     initModule        : initModule,
     removeSlider      : removeSlider,
     handleResize      : handleResize,
+
+    // TODO 2012-09-28 mmikowski - remove after DMSF update
     writeChat         : writeChat,
     comment           : comment,
     clear             : clear,

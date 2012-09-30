@@ -36,12 +36,18 @@ spa.chatlist = (function () {
         + '</div>',
 
       settable_map : {
+        chat_model      : true,
+        people_model    : true,
         set_chat_anchor : true
       },
 
       set_chat_anchor : null
     },
-    stateMap  = { sio : null },
+    stateMap  = {
+      chat_model   : null,
+      people_model : null,
+      sio          : null
+    },
     jqueryMap = {},
     personList = [],
 
@@ -156,6 +162,7 @@ spa.chatlist = (function () {
   };
 
   initModule = function ( $append_target, sio ) {
+    var user_name;
     stateMap.$append_target = $append_target;
     stateMap.sio = sio;
 
@@ -165,7 +172,9 @@ spa.chatlist = (function () {
     stateMap.sio.on( 'userchange', socketOnUserChange );
     stateMap.sio.on( 'userleft',   announceUserLeft );
 
-    spa.chatlist.me = prompt( "What's your name?" );
+    user_name = prompt( "What's your name?" );
+
+    spa.chatlist.me
 
     spa.data.createUser(
       spa.chatlist.me,
