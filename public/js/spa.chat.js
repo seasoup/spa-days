@@ -67,7 +67,6 @@ spa.chat = (function () {
       set_chat_anchor : null
     },
     stateMap  = {
-      sio : null,
       $append_target   : null,
       position_type    : 'closed',
       px_per_em        : 0,
@@ -77,10 +76,12 @@ spa.chat = (function () {
     },
     jqueryMap = {},
 
-    setJqueryMap, setPxSizes, setSliderPosition, onClickToggle,
-    onChatSend, configModule, initModule, removeSlider,
-    handleResize, writeChat, comment, clear, me, chatee,
-    setMe, setChatee
+    setJqueryMap,  setPxSizes,  writeChat,
+    writeComment,  clearChat,   setSliderPosition,
+    onClickToggle, onSubmitMsg,
+    setChateeCb,   chatCb,      updateChatCb,
+    configModule,  initModule,
+    removeSlider,  handleResize
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
@@ -208,12 +209,22 @@ spa.chat = (function () {
   };
   // End public DOM method /setSliderPosition/
 
+  writeChat = function ( person_name, text ) {
+    jqueryMap.$msgs.append( person_name + ': ' + text + '<br>');
+  };
+
+  writeComment = function ( text ) {
+    jqueryMap.$msgs.append( '<i>' + text + '</i><br>');
+  };
+
+  clearChat = function () { jqueryMap.$msgs.empty(); };
+
   //---------------------- END DOM METHODS ---------------------
 
   //------------------- BEGIN EVENT HANDLERS -------------------
   onClickToggle = function ( event ){
     var set_chat_anchor = configMap.set_chat_anchor;
-    if ( stateMap.position_type === 'opened' ){
+    if ( stateMap.position_type === 'opened' ) {
       set_chat_anchor( 'closed' );
     }
     else if ( stateMap.position_type === 'closed' ){
@@ -222,15 +233,34 @@ spa.chat = (function () {
     return false;
   };
 
-  onChatSend = function ( message ) {
-    jqueryMap.$input.val( '' );
-    writeChat( me, message );
-    stateMap.sio.emit( 'chat', { chatee: chatee, user: me, message: message } );
+  onSubmitMsg = function ( event ) {
+    var msg_text = jqueryMap.$input.val();
+    if ( msg_text.trim() === '' ){ return false; }
+    configMap.chat_model.send_msg( msg_text );
+    return false;
   };
   //-------------------- END EVENT HANDLERS --------------------
 
-  //------------------- BEGIN PUBLIC METHODS -------------------
+  //--------------------- BEGIN CALLBACKS ----------------------
+  setChateeCb =  function ( chatee ){
+    var set_chat_anchor = configMap.set_chat_anchor;
+    set_chat_anchor( 'opened' );
+    writeComment( 'You are now chatting with ' + chatee.name );
+    jqueryMap.$input.focus();
+  };
 
+  chatCb = function( response_map ){
+    jqueryMap.$input.val( '' );
+    writeChat( response_map.uname, response_map.msg_text );
+  };
+
+  updateChatCb = function ( data ){
+    configMap.chat_model.set_chatee( data[ 0 ] );
+    writeChat( data[ 0 ], data[ 1 ] );
+  };
+
+  //---------------------- END CALLBACKS -----------------------
+  //------------------- BEGIN PUBLIC METHODS -------------------
   // Begin public method /configModule/
   //
   // Example  : spa.chat.configModule({...});
@@ -298,10 +328,9 @@ spa.chat = (function () {
   //
   // Throws     : none
   //
-  initModule = function ( $append_target, sio ) {
+  initModule = function ( $append_target ) {
 
     stateMap.$append_target = $append_target;
-    stateMap.sio = sio;
 
     $append_target.append( configMap.main_html );
     setJqueryMap();
@@ -311,15 +340,13 @@ spa.chat = (function () {
     jqueryMap.$toggle.attr( 'title', configMap.slider_closed_title );
     jqueryMap.$head.click( onClickToggle );
     stateMap.position_type = 'closed';
-    jqueryMap.$form.submit( function () {
-      onChatSend( jqueryMap.$input.val() );
-      return false;
-    });
 
-    sio.on( 'updatechat', function ( data ) {
-      setChatee( data[ 0 ] );
-      writeChat( data[ 0 ], data[ 1 ] );
-    });
+    // configure chat model callbacks
+    configMap.chat_model.add_callback( 'setchatee', setChateeCb );
+    configMap.chat_model.add_callback( 'chat', chatCb );
+    configMap.chat_model.add_callback( 'updatechat', updateChatCb );
+
+    jqueryMap.$form.submit( onSubmitMsg );
 
     return true;
   };
@@ -378,39 +405,13 @@ spa.chat = (function () {
   };
   // End public method /handleResize/
 
-  writeChat = function ( user, text ) {
-    jqueryMap.$msgs.append( user + ': ' + text + '<br>');
-  };
-
-  comment = function ( text ) {
-    jqueryMap.$msgs.append( '<i>' + text + '</i><br>');
-  };
-
-  clear = function () {
-    jqueryMap.$msgs.empty();
-  };
-
-  setMe = function ( name ) {
-    me = name;
-  };
-
-  setChatee = function ( name ) {
-    chatee = name;
-  };
   // return public methods
   return {
     setSliderPosition : setSliderPosition,
     configModule      : configModule,
     initModule        : initModule,
     removeSlider      : removeSlider,
-    handleResize      : handleResize,
-
-    // TODO 2012-09-28 mmikowski - remove after DMSF update
-    writeChat         : writeChat,
-    comment           : comment,
-    clear             : clear,
-    setChatee         : setChatee,
-    setMe             : setMe
+    handleResize      : handleResize
   };
   //------------------- END PUBLIC METHODS ---------------------
 }());

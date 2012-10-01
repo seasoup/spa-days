@@ -1,3 +1,12 @@
+/*jslint         node    : true, continue : true,
+  devel  : true, indent  : 2,    maxerr   : 50,
+  newcap : true, nomen   : true, plusplus : true,
+  regexp : true, sloppy  : true, vars     : false,
+  white  : true
+*/
+
+/*global require, process, module, ObjectID */
+
 var chat        = require( './lib/chat.js' ),
     crud        = require( './lib/crud.js' )
     ;
@@ -50,7 +59,7 @@ module.exports = function( app ) {
       app.get( '/:object/delete/:id', function ( req, res ) {
         var object_map = { _id: ObjectID( req.params.id ) };
 
-        crud.delete( req.params.object, object_map, function ( result ) {
+        crud.destroy( req.params.object, object_map, function ( result ) {
           res.send( result );
         });
       });
@@ -59,7 +68,7 @@ module.exports = function( app ) {
         res.redirect( '/spa.html' );
       });
     }
-  }
+  };
 
   chat.connect( app, crud );
 

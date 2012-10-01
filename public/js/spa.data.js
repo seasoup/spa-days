@@ -18,14 +18,14 @@ spa.data = (function (){
     createUser, makeSio, getSio, clearSio, initModule
     ;
 
-  createUser = function ( uname, callback ) {
-    $.ajax({
-      url  : '/users/create',
-      type : 'post',
-      data : { name : uname },
-      success : callback
-    });
-  };
+//  createUser = function ( uname, callback ) {
+//    $.ajax({
+//      url  : '/users/create',
+//      type : 'post',
+//      data : { name : uname },
+//      success : callback
+//    });
+//  };
 
   makeSio = function (){
     var emit, on, socket;
@@ -51,7 +51,7 @@ spa.data = (function (){
   };
   clearSio = function (){
     if ( stateMap.sio ){
-      stateMap.sio.disconnect();
+      stateMap.sio.emit('disconnect');
       stateMap.sio = null;
     }
   };
@@ -61,7 +61,7 @@ spa.data = (function (){
   return {
     getSio     : getSio,
     clearSio   : clearSio,
-    createUser : createUser,
+    // createUser : createUser,
     initModule : initModule
   };
 }());

@@ -37,7 +37,6 @@ spa.shell = (function () {
         + '<div class="spa-shell-modal"></div>'
     },
     stateMap  = {
-      sio         : null,
       $container  : undefined,
       anchor_map  : {},
       resize_idto : undefined
@@ -215,9 +214,12 @@ spa.shell = (function () {
     return true;
   };
   // End Event handler /onResize/
+  onBeforeunload = function (){
+    spa.model.chat.leave();
+  };
 
   // Begin Event handler /onBeforeunload/
-  onBeforeunload = function (){ spa.model.chat.leave(); };
+
   // End Event handler /onBeforeunload/
   //-------------------- END EVENT HANDLERS --------------------
 
@@ -259,15 +261,12 @@ spa.shell = (function () {
     });
 
     // configure and initialize chat
-    // TODO 2012-09-28 mmikowski remove sio after move to DMSF update
-    stateMap.sio = spa.data.getSio();
     spa.chat.configModule({
       set_chat_anchor : setChatAnchor,
       people_model    : spa.model.people,
       chat_model      : spa.model.chat
     });
-    // TODO 2012-09-28 mmikowski remove sio after move to DMSF update
-    spa.chat.initModule( jqueryMap.$container, stateMap.sio );
+    spa.chat.initModule( jqueryMap.$container );
 
     // configure and initialize chatlist
     spa.chatlist.configModule({
@@ -275,8 +274,7 @@ spa.shell = (function () {
       people_model    : spa.model.people,
       chat_model      : spa.model.chat
     });
-    // TODO 2012-09-28 mmikowski remove sio after move to DMSF update
-    spa.chatlist.initModule( jqueryMap.$container, stateMap.sio );
+    spa.chatlist.initModule( jqueryMap.$container );
 
     // Handle URI anchor change events.
     // This is done /after/ all feature modules are configured
@@ -287,8 +285,7 @@ spa.shell = (function () {
     $(window)
       .bind( 'resize',       onResize  )
       .bind( 'hashchange',   onHashchange )
-      // .bind( 'beforeunload', onBeforeunload )
-      .bind( 'resize', onBeforeunload )
+      .bind( 'beforeunload', onBeforeunload )
       .trigger( 'hashchange' );
 
   };

@@ -3,23 +3,23 @@ What we want:
 FEATURE MODULE LEVEL
 
 We should prefer to use an abstracted inteface from the model,
-with perhaps the Shell maintaining and coordinating any global chat artifacts.
-A key aspect of the implementation should be that data - model layers should
-always be independent from the DOM.  Therefore, we will want to use callbacks.
+with perhaps the model maintaining and coordinating any global chat
+artifacts. A key aspect of the implementation should be that data and model
+layers should always be independent from the DOM.  Therefore, we will want
+to use callbacks:
 
-  spa.model.people.create_user( <id>, <name> );
+  spa.model.people.make_user( <name> );
   spa.model.chat.join();
   spa.model.chat.set_chatee( 'fred' );
 
   // set callbacks for various events
-  spa.model.chat.add_callback( 'userchange', onUserchangeCb );
-  spa.model.chat.add_callback( 'userleft', onUserleftCb );
-  spa.model.chat.add_callback( 'updatechat', onUpdatechatCb );
+  spa.model.chat.add_callback( 'userchange', userchangeCb );
+  spa.model.chat.add_callback( 'chat',       chatCb );
+  spa.model.chat.add_callback( 'updatechat', updateChatCb );
 
   // ... later ...
 
-  spa.model.disconnect();
-
+  spa.model.chat.send_msg( ... );
 
 There is some question of the concept of chat rooms, which we can discuss.
 It may be that only a single chatroom is supported in our implementation.
@@ -31,13 +31,9 @@ Global event have greatly improved over the last year in performance.  See
 http://stackoverflow.com/questions/3162748/jquery-global-events-and-performance.
 There is no good reason not to use them.
 
-When message is received for a user, a global event is emitted by the sio
-object which contains the chatroom, message, user, and timestamp.
-Add the namespace prefix to the event! - spa_model_message, or something like that.
-
-The onMessage handler would pick up the event and then direct
-output to the correct elements or callbacks registered for onMessage
-consideration.
+When message is received for a user, an 'updatechat' event is received by
+the by the sio object.  This contains the username and message text
+as arugments.
 
 VARIOUS CLIENT CODE CONCEPTS
 
@@ -52,30 +48,32 @@ VARIOUS CLIENT CODE CONCEPTS
   // and revised_list now has all existant elements
 
 When user types in a message and presses return, we get an on-submit event and
-we can send the message with model.chat.send(...);
-Use event.which for keyboard events:
+we can send the message with spa.model.chat.send_msg(...);
+Use event.which for keyboard events, as it is the most robust.
 
-  var onKeypress = function( event ) {
-    var
-      $input_field = $(this),
-      input_text   = $input_field.val().trim()
-      ;
+NOTES 2012-09-30 per Josh:
 
-    // Look for enter keycode
-    // Note which deprecates keyCode, as it is normalized
-    // if ( ( event.keyCode === 13 ) && input_text ){
-    if ( ( event.which === 13 ) && input_text ){
-      // do not send message if we are an anonymous user
-      if ( model.user.isVisitor() ){
-        stateMap.cb_is_visitor(model.user);
-      }
-      else {
-        model.chat.send(
-          input_text,
-          function (){ $input_field.val(''); } // callback on send
-        );
-      }
-    }
-  };
+user comes to page:
+ - gets uname
+ - client.emit( 'adduser', uname );
+
+client emits 'userchange' to all connected clients
+  package: list of users in response_list[0][n].name
+
+User inputs a message.
+client emits a 'chat' with this argument:
+ { user : uname, message : msg_text, chatee : chatee.name };
+
+Server receives chat and looks up the chatter list
+server emits 'updatechat' to chatee only with originating username and
+message.
+
+If chatee is offline, Server emits back to originating client an 'updatechat'
+event with 'spa' as username, and message indicates it target chattee is
+offline.
+
+When client is closed, should emit a 'leavechat' event.  Server removes user
+and then emits a 'userchange' to all connected clients.
+package: list of users in response_list[0][n].name
 
 
