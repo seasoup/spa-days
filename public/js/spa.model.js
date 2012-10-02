@@ -141,7 +141,6 @@ spa.model = (function (){
 
     clear_callback_map = function (){
       callback_map = {
-        'chat'       : [],
         'setchatee'  : [],
         'updatechat' : [],
         'userchange' : [ on_userchange ]
@@ -170,6 +169,8 @@ spa.model = (function (){
       process_event( 'userchange', response );
     };
     process_event_updatechat = function ( response ){
+      // if we just call startChat, it will comment you are now chatting with yourself
+      // if ( response[ 0 ] !== my name ) { spa.chat.startChat( response[ 0 ] );
       process_event( 'updatechat', response );
     };
 
@@ -243,16 +244,16 @@ spa.model = (function (){
 
       send_msg : function ( msg_text ){
         if ( stateMap.user && chatee ){
-          sio.emit( 'chat', {
+          sio.emit( 'updatechat', {
             chatee  : chatee.name,
             user    : stateMap.user.name,
             message : msg_text
           });
 
-          process_event( 'chat', {
-            uname    : stateMap.user.name,
-            msg_text : msg_text
-          });
+          process_event( 'updatechat', [
+            stateMap.user.name,
+            msg_text
+          ]);
         }
       },
 

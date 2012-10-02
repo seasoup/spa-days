@@ -78,8 +78,8 @@ spa.chat = (function () {
 
     setJqueryMap,  setPxSizes,  writeChat,
     writeComment,  clearChat,   setSliderPosition,
-    onClickToggle, onSubmitMsg,
-    setChateeCb,   chatCb,      updateChatCb,
+    onClickToggle, onSubmitMsg, startChat,
+    setChateeCb,   updateChatCb,
     configModule,  initModule,
     removeSlider,  handleResize
     ;
@@ -249,15 +249,14 @@ spa.chat = (function () {
     jqueryMap.$input.focus();
   };
 
-  chatCb = function( response_map ){
-    jqueryMap.$input.val( '' );
-    writeChat( response_map.uname, response_map.msg_text );
-  };
-
   updateChatCb = function ( data ){
-    configMap.chat_model.set_chatee( data[ 0 ] );
+    jqueryMap.$input.val( '' );
     writeChat( data[ 0 ], data[ 1 ] );
   };
+  
+  startChat = function ( name ) {
+    configMap.chat_model.set_chatee( name ); 
+  }
 
   //---------------------- END CALLBACKS -----------------------
   //------------------- BEGIN PUBLIC METHODS -------------------
@@ -342,8 +341,7 @@ spa.chat = (function () {
     stateMap.position_type = 'closed';
 
     // configure chat model callbacks
-    configMap.chat_model.add_callback( 'setchatee', setChateeCb );
-    configMap.chat_model.add_callback( 'chat', chatCb );
+    configMap.chat_model.add_callback( 'setchatee',  setChateeCb  );
     configMap.chat_model.add_callback( 'updatechat', updateChatCb );
 
     jqueryMap.$form.submit( onSubmitMsg );
@@ -411,7 +409,8 @@ spa.chat = (function () {
     configModule      : configModule,
     initModule        : initModule,
     removeSlider      : removeSlider,
-    handleResize      : handleResize
+    handleResize      : handleResize,
+    startChat         : startChat
   };
   //------------------- END PUBLIC METHODS ---------------------
 }());
