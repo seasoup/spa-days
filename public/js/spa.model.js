@@ -162,7 +162,7 @@ spa.model = (function (){
             person_map.cid = makeCid();
           }
           people.make_person( person_map );
-          if ( chatee && chatee.name == name ){
+          if ( chatee && chatee.name === name ){
             is_chatee_online = true;
           }
         }
