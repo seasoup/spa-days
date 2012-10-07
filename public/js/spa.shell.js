@@ -214,12 +214,11 @@ spa.shell = (function () {
     return true;
   };
   // End Event handler /onResize/
-  onBeforeunload = function (){
-    spa.model.chat.leave();
-  };
 
   // Begin Event handler /onBeforeunload/
-
+  //onBeforeunload = function (){
+  //  spa.model.chat.leave();
+  //};
   // End Event handler /onBeforeunload/
   //-------------------- END EVENT HANDLERS --------------------
 
@@ -285,7 +284,7 @@ spa.shell = (function () {
     $(window)
       .bind( 'resize',       onResize  )
       .bind( 'hashchange',   onHashchange )
-      .bind( 'beforeunload', onBeforeunload )
+      // .bind( 'beforeunload', onBeforeunload )
       .trigger( 'hashchange' );
 
   };

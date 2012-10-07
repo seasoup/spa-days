@@ -116,16 +116,16 @@ spa.chatlist = (function () {
   };
 
   initModule = function ( $append_target ) {
-    var uname;
+    var name;
     stateMap.$append_target = $append_target;
 
     $append_target.append( configMap.main_html );
     setJqueryMap();
 
-    uname = prompt( "What's your name?" );
+    name = prompt( "What's your name?" );
 
     configMap.chat_model.add_callback( 'userchange', onUserchange );
-    configMap.people_model.make_user( uname );
+    configMap.people_model.make_user( name );
     configMap.chat_model.join();
     jqueryMap.$names.on( 'click', '.spa-chatlist-name', onClickName);
 

@@ -29,13 +29,18 @@ spa.chat = (function () {
           + '</div>'
           + '<div class="spa-chat-closer">x</div>'
           + '<div class="spa-chat-sizer">'
-            + '<div class="spa-chat-msgs"></div>'
-            + '<div class="spa-chat-box">'
-              + '<form class="spa-chat-form">'
-                + '<input type="text"/>'
-                + '<input type="submit" style="display:none"/>'
-                + '<div class="spa-chat-send-button" value="send">send</div>'
-              + '</form>'
+            + '<div class="spa-chat-list">'
+              + '<div class="spa-chat-list-box"></div>'
+            + '</div>'
+            + '<div class="spa-chat-msg">'
+              + '<div class="spa-chat-msg-box"></div>'
+              + '<div class="spa-chat-msg-in">'
+                + '<form class="spa-chat-msg-form">'
+                  + '<input type="text"/>'
+                  + '<input type="submit" style="display:none"/>'
+                  + '<div class="spa-chat-msg-send" value="send">send</div>'
+                + '</form>'
+              + '</div>'
             + '</div>'
           + '</div>'
         + '</div>',
@@ -76,9 +81,9 @@ spa.chat = (function () {
     },
     jqueryMap = {},
 
-    setJqueryMap,  setPxSizes,  writeChat,
+    setJqueryMap,  setPxSizes,  scrollChat,  writeChat,
     writeComment,  clearChat,   setSliderPosition,
-    onClickToggle, onSubmitMsg, startChat,
+    onClickToggle, onSubmitMsg, // startChat,
     setChateeCb,   updateChatCb,
     configModule,  initModule,
     removeSlider,  handleResize
@@ -100,16 +105,16 @@ spa.chat = (function () {
       ;
 
     jqueryMap = {
-      $slider : $slider,
-      $head   : $slider.find( '.spa-chat-head' ),
-      $toggle : $slider.find( '.spa-chat-head-toggle' ),
-      $title  : $slider.find( '.spa-chat-head-title' ),
-      $sizer  : $slider.find( '.spa-chat-sizer' ),
-      $msgs   : $slider.find( '.spa-chat-msgs' ),
-      $box    : $slider.find( '.spa-chat-box' ),
-      $input  : $slider.find( '.spa-chat-box input[type=text]'),
-      $send   : $slider.find( '.spa-chat-send-button' ),
-      $form   : $slider.find( '.spa-chat-form' )
+      $slider  : $slider,
+      $head    : $slider.find( '.spa-chat-head' ),
+      $toggle  : $slider.find( '.spa-chat-head-toggle' ),
+      $title   : $slider.find( '.spa-chat-head-title' ),
+      $sizer   : $slider.find( '.spa-chat-sizer' ),
+      $msg_box : $slider.find( '.spa-chat-msg-box' ),
+      $msg_in  : $slider.find( '.spa-chat-msg-in' ),
+      $input   : $slider.find( '.spa-chat-msg-in input[type=text]'),
+      $send    : $slider.find( '.spa-chat-msg-send' ),
+      $form    : $slider.find( '.spa-chat-msg-form' )
     };
   };
   // End DOM method /setJqueryMap/
@@ -209,15 +214,25 @@ spa.chat = (function () {
   };
   // End public DOM method /setSliderPosition/
 
+  scrollChat = function() {
+    var $msg_box = jqueryMap.$msg_box;
+    $msg_box.animate(
+      { scrollTop : $msg_box.prop('scrollHeight') - $msg_box.height() },
+      150
+    );
+  };
+
   writeChat = function ( person_name, text ) {
-    jqueryMap.$msgs.append( person_name + ': ' + text + '<br>');
+    jqueryMap.$msg_box.append( person_name + ': ' + text + '<br>');
+    scrollChat();
   };
 
   writeComment = function ( text ) {
-    jqueryMap.$msgs.append( '<i>' + text + '</i><br>');
+    jqueryMap.$msg_box.append( '<i>' + text + '</i><br>');
+    scrollChat();
   };
 
-  clearChat = function () { jqueryMap.$msgs.empty(); };
+  clearChat = function () { jqueryMap.$msg_box.empty(); };
 
   //---------------------- END DOM METHODS ---------------------
 
@@ -237,28 +252,54 @@ spa.chat = (function () {
     var msg_text = jqueryMap.$input.val();
     if ( msg_text.trim() === '' ){ return false; }
     configMap.chat_model.send_msg( msg_text );
+    jqueryMap.$input.focus();
     return false;
   };
   //-------------------- END EVENT HANDLERS --------------------
 
   //--------------------- BEGIN CALLBACKS ----------------------
-  setChateeCb =  function ( chatee ){
-    var set_chat_anchor = configMap.set_chat_anchor;
-    set_chat_anchor( 'opened' );
-    writeComment( 'You are now chatting with ' + chatee.name );
+  setChateeCb = function ( chatee ){
+    var last_chatee_name;
+
+    configMap.set_chat_anchor( 'opened' );
+
     jqueryMap.$input.focus();
+    if ( ! chatee ){
+      if ( last_chatee_name ){
+        writeComment( last_chatee_name + ' has left the chat' );
+      }
+      else {
+        writeComment(  'Your friend has left the chat' );
+      }
+      jqueryMap.$title.text( 'Chat' );
+      return false;
+    }
+
+    writeComment( 'You are now chatting with ' + chatee.name );
+    jqueryMap.$title.text( 'Chatting with ' + chatee.name );
+    last_chatee_name = chatee.name;
+    return true;
   };
 
   updateChatCb = function ( data ){
-    jqueryMap.$input.val( '' );
-    writeChat( data[ 0 ], data[ 1 ] );
-  };
-  
-  startChat = function ( name ) {
-    configMap.chat_model.set_chatee( name ); 
-  }
+    var
+      sender_name = data [ 0 ],
+      msg_text    = data [ 1 ],
+      chatee      = configMap.chat_model.get_chatee() || {}
+      ;
 
+    jqueryMap.$input.val( '' );
+    jqueryMap.$input.focus();
+
+    if ( sender_name !== configMap.people_model.get_user().name
+      && sender_name !== chatee.name
+    ){
+      configMap.chat_model.set_chatee( sender_name );
+    }
+    writeChat( sender_name, msg_text );
+  };
   //---------------------- END CALLBACKS -----------------------
+
   //------------------- BEGIN PUBLIC METHODS -------------------
   // Begin public method /configModule/
   //
@@ -409,8 +450,8 @@ spa.chat = (function () {
     configModule      : configModule,
     initModule        : initModule,
     removeSlider      : removeSlider,
-    handleResize      : handleResize,
-    startChat         : startChat
+    handleResize      : handleResize
+    // startChat      : startChat
   };
   //------------------- END PUBLIC METHODS ---------------------
 }());

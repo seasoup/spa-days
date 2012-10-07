@@ -54,15 +54,15 @@ Use event.which for keyboard events, as it is the most robust.
 NOTES 2012-09-30 per Josh:
 
 user comes to page:
- - gets uname
- - client.emit( 'adduser', uname );
+ - gets name
+ - client.emit( 'adduser', name );
 
 client emits 'userchange' to all connected clients
   package: list of users in response_list[0][n].name
 
 User inputs a message.
 client emits a 'chat' with this argument:
- { user : uname, message : msg_text, chatee : chatee.name };
+ { user : name, message : msg_text, chatee : chatee.name };
 
 Server receives chat and looks up the chatter list
 server emits 'updatechat' to chatee only with originating username and

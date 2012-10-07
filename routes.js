@@ -17,7 +17,7 @@ module.exports = function( app ) {
 
       app.all( '/:object/*?', function ( req, res, next ) {
         var valid_object_type = !!crud.schema_map[ req.params.object ];
-        
+
         res.contentType( 'json' );
         if ( valid_object_type ) {
           next();
@@ -33,7 +33,7 @@ module.exports = function( app ) {
       });
 
       app.post( '/:object/create', function ( req, res ) {
-        crud.create( req.params.object, req.body, function ( result ) {
+        crud.make( req.params.object, req.body, function ( result ) {
           res.send( result );
         });
       });

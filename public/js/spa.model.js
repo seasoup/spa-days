@@ -55,17 +55,18 @@ spa.model = (function (){
         }
       }
     },
+
     make_person : function ( arg_map ){
       var person,
         cid   = arg_map.cid,
         id    = arg_map.id,
-        uname = arg_map.uname;
+        name  = arg_map.name;
 
-      if ( ! cid || ! uname ){ throw 'client id and name required'; }
+      if ( ! cid || ! name ){ throw 'client id and name required'; }
 
       person      = Object.create( personProto );
       person.cid  = cid;
-      person.name = uname;
+      person.name = name;
 
       stateMap.people_cid_map[ cid ] = person;
       if ( id ){
@@ -77,14 +78,14 @@ spa.model = (function (){
       return person;
     },
 
-    make_user : function ( uname ){
+    make_user : function ( name ){
       var sio = spa.data.getSio();
       stateMap.user = this.make_person({
-        uname : uname,
-        cid   : makeCid()
+        name   : name,
+        cid    : makeCid()
       });
 
-      sio.emit( 'adduser', uname );
+      sio.emit( 'adduser', name );
     },
 
     remove_person : function ( person ){
@@ -112,40 +113,82 @@ spa.model = (function (){
   };
 
   chat = (function (){
-    var clear_callback_map, on_userchange,
-      sio, chatee, callback_map, process_event,
-      process_event_userchange, process_event_updatechat;
+    var chatee, set_chatee, leave_chat,
+      on_userchange, on_disconnect, clear_callback_map,
+      callback_map, process_event,
+      process_event_userchange, process_event_updatechat,
+      process_event_disconnect;
+
+    set_chatee = function ( chatee_name ){
+      var people_db, chatee_list, new_chatee;
+      people_db = people.get_db();
+      chatee_list = people_db({ name : chatee_name || '' }).get();
+      if ( chatee_list.length > 0 ){
+        new_chatee = chatee_list[ 0 ];
+        if ( chatee && chatee.name === new_chatee.name ){
+          return false;
+        }
+        chatee = new_chatee;
+      }
+      else {
+        chatee = null;
+      }
+      process_event( 'setchatee', chatee );
+      return true;
+    };
+
+    leave_chat = function (){
+      var sio = spa.data.getSio();
+      if ( sio ){ sio.emit('disconnect'); }
+      // sio.emit( 'leavechat', stateMap.user.name );
+    };
 
     on_userchange = function( response ){
-      var i, id, make_map;
+      var i, id, person_map, name, is_chatee_online = false;
 
       people.clear_db();
 
       for ( i = 0; i < response[0].length; i++ ) {
         if (response[ 0 ][ i ].name ) {
-          id  = response[ 0 ][ i ]._id;
-          make_map = { uname : response[ 0 ][ i ].name };
+          id   = response[ 0 ][ i ]._id;
+          name = response[ 0 ][ i ].name;
+          person_map = { name : name };
 
           if ( id ){
-            make_map.id  = id;
-            make_map.cid = id;
+            person_map.id  = id;
+            person_map.cid = id;
           }
           else {
-            make_map.cid = makeCid();
+            person_map.cid = makeCid();
           }
-          people.make_person(make_map);
+          people.make_person( person_map );
+          if ( chatee && chatee.name == name ){
+            is_chatee_online = true;
+          }
         }
       }
-      stateMap.people_db.sort('name');
+      stateMap.people_db.sort( 'name' );
+      // if chatee is no longer online, we unset the chatee
+      // and trigger a set_chatee event
+      if ( chatee && ! is_chatee_online ){
+        set_chatee('');
+      }
+    };
+
+    on_disconnect = function ( data ){
+      console.warn( 'disconnecting ...' );
+      leave_chat();
     };
 
     clear_callback_map = function (){
       callback_map = {
+        'disconnect' : [ on_disconnect ],
         'setchatee'  : [],
         'updatechat' : [],
         'userchange' : [ on_userchange ]
       };
     };
+
     clear_callback_map();
 
     process_event = function ( event_type, response ){
@@ -169,9 +212,15 @@ spa.model = (function (){
       process_event( 'userchange', response );
     };
     process_event_updatechat = function ( response ){
-      // if we just call startChat, it will comment you are now chatting with yourself
-      // if ( response[ 0 ] !== my name ) { spa.chat.startChat( response[ 0 ] );
+      // TODO 2012-10-06 mmikowski - the following comments from Josh are
+      // a really bad idea as it breaks our calling convention:
+      // "  if we just call startChat, it will comment you are now chatting with yourself
+      //    if ( response[ 0 ] !== my name ) { spa.chat.startChat( response[ 0 ] );
+      // "
       process_event( 'updatechat', response );
+    };
+    process_event_disconnect =  function ( response ){
+      process_event( 'disconnect', response );
     };
 
     return {
@@ -213,6 +262,7 @@ spa.model = (function (){
       },
 
       join  : function (){
+        var sio;
         if ( stateMap.user.is_anon() ){
           console.warn( 'User must be defined before joining chat');
           return false;
@@ -221,28 +271,18 @@ spa.model = (function (){
         sio = spa.data.getSio();
         sio.on( 'userchange', process_event_userchange );
         sio.on( 'updatechat', process_event_updatechat );
+        sio.on( 'disconnect', process_event_disconnect );
       },
 
-      set_chatee : function ( chatee_name ){
-        var people_db, chatee_list, new_chatee;
-        if ( ! chatee_name ){ return false; }
-
-        people_db = people.get_db();
-        chatee_list = people_db({ name : chatee_name }).get();
-        if ( chatee_list.length > 0 ){
-          new_chatee = chatee_list[ 0 ];
-          if ( chatee && chatee.name === new_chatee.name ){
-            return false;
-          }
-          chatee = new_chatee;
-          process_event( 'setchatee', chatee );
-          return true;
-        }
-      },
+      set_chatee : set_chatee,
 
       get_chatee : function (){ return chatee; },
 
       send_msg : function ( msg_text ){
+        var sio = spa.data.getSio();
+
+        if ( ! sio ){ return false; }
+
         if ( stateMap.user && chatee ){
           sio.emit( 'updatechat', {
             chatee  : chatee.name,
@@ -257,18 +297,13 @@ spa.model = (function (){
         }
       },
 
-      leave : function (){
-        if ( sio ){
-          sio.emit( 'leavechat', stateMap.user.name );
-          spa.data.clearSio();
-        }
-      }
+      leave : leave_chat
     };
   }());
 
   initModule = function (){
     stateMap.anon_user = people.make_person({
-      uname : 'anonymous',
+      name  : 'anonymous',
       cid   : makeCid(),
       id    : stateMap.anon_id
     });

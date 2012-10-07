@@ -7,6 +7,9 @@
     "name": {
       "type": "string"
     },
+    "is_online" : {
+      "type": "boolean"
+    },
     "phone": { 
       "type": "string"
     }
