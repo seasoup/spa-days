@@ -6,9 +6,15 @@ public/js/spa.js:
     o on catch( error ), use console.trace( error ) instead of
     console.error( error ) (preferred) or removed try-catch altogether
 public/js/spa.chat.js:
-    o Send button does not work - fix.
+    x We can now switch between users when chatting.
+    x We now update the chat title to indicate who the chatee is.
+    x Chat list is now much prettier and integrated
+    x The chat text now distinguish between *you* and a remote user (you
+    in bold at present)
+    x The chat pane does now auto-scrolls to the bottom.
+    x Send button now works in addition to hitting return
     o add user icon next to chatters
-    o clean up format (autoformat)
+    o clean syntax (autoformat)
     o Remove 'whats your name' code from here and move to 'login' in shell
     o Implement hidden for chat; hide chat unless logged in.
     o Bold for user should be different color.  Implement style
@@ -27,10 +33,12 @@ public/js/spa.shell.js:
     o add login function here
     o restyle to look less cartoonish
     o remove beforeunload code
+    x replaced onbeforeunload event with disconnect.
+      this is much more reliable and efficient.
 public/css/spa.chat.css:
     o make window 35em instead of 30em wide
     o consider rounding TL chat-list-box corner 0.2em
-    o autoformat
+    o clean syntax (autoformat)
 public/css/spa.shell.css
     o restyle to look less cartoonish
 lib/crud.js:
@@ -43,10 +51,11 @@ lib/crud.js:
 package.json:
     x bump SPA version to 0.0.2.
     x rename to 'SPA example'
-    x autoformat using webstorm
+    x clean syntax (autoformat)
 design.txt:
     o delete (supplant by spa.model.js)
 README.txt
     o add this and point to public/js/spa.model.js for docs
+
 
 
