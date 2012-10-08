@@ -206,7 +206,7 @@ spa.chat = (function () {
       { height : height_px },
       animate_time,
       function () {
-        jqueryMap.$toggle.attr( 'title', slider_title );
+        jqueryMap.$toggle.prop( 'title', slider_title );
         jqueryMap.$toggle.text( toggle_text );
         stateMap.position_type = position_type;
         if ( callback ) { callback( jqueryMap.$slider ); }
@@ -442,6 +442,7 @@ spa.chat = (function () {
 
     jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);
     jqueryMap.$form.submit( onSubmitMsg );
+    jqueryMap.$send.click(  onSubmitMsg );
 
     return true;
   };
