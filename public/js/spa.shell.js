@@ -268,12 +268,12 @@ spa.shell = (function () {
     spa.chat.initModule( jqueryMap.$container );
 
     // configure and initialize chatlist
-    spa.chatlist.configModule({
-      set_chat_anchor : setChatAnchor,
-      people_model    : spa.model.people,
-      chat_model      : spa.model.chat
-    });
-    spa.chatlist.initModule( jqueryMap.$container );
+    // spa.chatlist.configModule({
+    //  set_chat_anchor : setChatAnchor,
+    //  people_model    : spa.model.people,
+    //  chat_model      : spa.model.chat
+    // });
+    // spa.chatlist.initModule( jqueryMap.$container );
 
     // Handle URI anchor change events.
     // This is done /after/ all feature modules are configured

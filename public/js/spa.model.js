@@ -29,7 +29,7 @@ spa.model = (function (){
     ;
 
   personProto = {
-    is_user : function (){ return this.cid === stateMap.user.cid; },
+    is_user : function (){ console.warn( this.cid, stateMap.user ); return this.cid === stateMap.user.cid; },
     is_anon : function (){ return this.cid === configMap.anon_id; }
   };
 
@@ -113,11 +113,41 @@ spa.model = (function (){
   };
 
   chat = (function (){
-    var chatee, set_chatee, leave_chat,
-      on_userchange, on_disconnect, clear_callback_map,
-      callback_map, process_event,
+    var
       process_event_userchange, process_event_updatechat,
-      process_event_disconnect;
+      process_event_disconnect,
+
+      chatee, set_chatee, leave_chat,
+      on_userchange, on_disconnect, clear_callback_map,
+      callback_map, process_event;
+
+
+    process_event = function ( event_type, response ){
+      // console.warn( event_type, response );
+      // we get the event type here and then
+      // loop through and execute all the callbacks with event data
+      // as the argument. We might consider cleaning up some of the
+      // response data before passing it back to the callbacks.
+      var i, callback,
+        callback_list = callback_map[ event_type ];
+
+      if ( ! callback_list ){ throw 'invalid event_type: ' + event_type; }
+
+      for ( i = 0; i < callback_list.length; i++ ){
+        callback = callback_list[i];
+        callback( response );
+      }
+    };
+
+    process_event_userchange = function ( response ){
+      process_event( 'userchange', response );
+    };
+    process_event_updatechat = function ( response ){
+      process_event( 'updatechat', response );
+    };
+    process_event_disconnect =  function ( response ){
+      process_event( 'disconnect', response );
+    };
 
     set_chatee = function ( chatee_name ){
       var people_db, chatee_list, new_chatee;
@@ -128,12 +158,15 @@ spa.model = (function (){
         if ( chatee && chatee.name === new_chatee.name ){
           return false;
         }
-        chatee = new_chatee;
       }
       else {
-        chatee = null;
+        new_chatee = null;
       }
-      process_event( 'setchatee', chatee );
+      process_event(
+        'setchatee',
+        { old_chatee : chatee, new_chatee : new_chatee }
+      );
+      chatee = new_chatee;
       return true;
     };
 
@@ -154,6 +187,8 @@ spa.model = (function (){
           name = response[ 0 ][ i ].name;
           person_map = { name : name };
 
+          // skip creating user, because it is already there
+          if ( stateMap.user && stateMap.user.name === name ){ continue; }
           if ( id ){
             person_map.id  = id;
             person_map.cid = id;
@@ -190,38 +225,6 @@ spa.model = (function (){
     };
 
     clear_callback_map();
-
-    process_event = function ( event_type, response ){
-    // console.warn( event_type, response );
-    // we get the event type here and then
-    // loop through and execute all the callbacks with event data
-    // as the argument. We might consider cleaning up some of the
-    // response data before passing it back to the callbacks.
-      var i, callback,
-        callback_list = callback_map[ event_type ];
-
-      if ( ! callback_list ){ throw 'invalid event_type: ' + event_type; }
-
-       for ( i = 0; i < callback_list.length; i++ ){
-         callback = callback_list[i];
-         callback( response );
-       }
-    };
-
-    process_event_userchange = function ( response ){
-      process_event( 'userchange', response );
-    };
-    process_event_updatechat = function ( response ){
-      // TODO 2012-10-06 mmikowski - the following comments from Josh are
-      // a really bad idea as it breaks our calling convention:
-      // "  if we just call startChat, it will comment you are now chatting with yourself
-      //    if ( response[ 0 ] !== my name ) { spa.chat.startChat( response[ 0 ] );
-      // "
-      process_event( 'updatechat', response );
-    };
-    process_event_disconnect =  function ( response ){
-      process_event( 'disconnect', response );
-    };
 
     return {
       add_callback : function ( event_type, callback ){
@@ -290,10 +293,10 @@ spa.model = (function (){
             message : msg_text
           });
 
-          process_event( 'updatechat', [
-            stateMap.user.name,
-            msg_text
-          ]);
+          process_event(
+            'updatechat',
+            [ stateMap.user.name, msg_text ]
+          );
         }
       },
 
