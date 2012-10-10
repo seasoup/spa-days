@@ -10,7 +10,7 @@
   position      : absolute;
   bottom        : 0;
   right         : 0;
-  width         : 30em;
+  width         : 32em;
   height        : 2em;
   background    : #fff;
   border-radius : 0.5em 0 0 0;
@@ -30,7 +30,7 @@
   cursor        : pointer;
   background    : #888;
   color         : white;
-  font-family   : arial,helvetica,sans-serif;
+  font-family   : arial, helvetica, sans-serif;
   font-weight   : 800;
   text-align    : center;
 }
@@ -42,12 +42,13 @@
 }
 
 .spa-chat-closer {
-  right       : 0;
-  width       : 2em;
+  right : 0;
+  width : 2em;
 }
-  .spa-chat-closer:hover {
-    background : #800;
-  }
+
+.spa-chat-closer:hover {
+  background : #800;
+}
 
 .spa-chat-head-toggle {
   position      : absolute;
@@ -88,20 +89,35 @@
   right    : 0;
 }
 
-.spa-chat-msg-box,
+.spa-chat-msg-log,
 .spa-chat-list-box {
   position   : absolute;
   top        : 1em;
   overflow-x : hidden;
 }
 
-.spa-chat-msg-box {
+.spa-chat-msg-log {
   left       : 0em;
   right      : 1em;
   bottom     : 6em;
   padding    : 0.5em;
   border     : thin solid #888;
   overflow-y : scroll;
+}
+
+.spa-chat-msg-log-msg {
+  background-color : #eee;
+}
+
+.spa-chat-msg-log-me {
+  font-weight : 800;
+  color       : #484;
+}
+
+.spa-chat-msg-log-alert {
+  font-style  : italic;
+  background  : #a88;
+  color       : #fff;
 }
 
 .spa-chat-list-box {
@@ -117,28 +133,32 @@
   border-radius    : 0.5em 0 0 0;
 }
 
-.spa-chat-list-name {
+.spa-chat-list-name, .spa-chat-list-note {
   width   : 100%;
   padding : 0.1em 0.5em;
-  cursor  : pointer;
 }
-  .spa-chat-list-name:hover {
-    background-color: #aaa;
-    color : #888;
-  }
-  .spa-chat-list-name.spa-x-select {
-    background-color: #fff;
-    color : #444;
-  }
 
+.spa-chat-list-name {
+  cursor : pointer;
+}
+
+.spa-chat-list-name:hover {
+  background-color : #aaa;
+  color            : #888;
+}
+
+.spa-chat-list-name.spa-x-select {
+  background-color : #fff;
+  color            : #444;
+}
 
 .spa-chat-msg-in {
-  position : absolute;
-  height   : 2em;
-  left     : 0em;
-  right    : 1em;
-  bottom   : 3em;
-  border   : thin solid #888;
+  position   : absolute;
+  height     : 2em;
+  left       : 0em;
+  right      : 1em;
+  bottom     : 3em;
+  border     : thin solid #888;
   background : #888;
 }
 
@@ -151,11 +171,12 @@
   background : #ddd;
   color      : #404040;
 }
-  .spa-chat-msg-in input[type=text]:focus {
-    background : #fff;
-  }
 
-.spa-chat-msg-in div {
+.spa-chat-msg-in input[type=text]:focus {
+  background : #fff;
+}
+
+.spa-chat-msg-send {
   float       : left;
   width       : 25%;
   height      : 2em;
@@ -165,10 +186,12 @@
   font-weight : 800;
   cursor      : pointer;
 }
-  .spa-chat-msg-in div:hover {
-    background-color: #444;
-    color      : #ff0;
-  }
+
+.spa-chat-msg-send:hover,
+.spa-chat-msg-send.spa-x-select {
+  background-color : #444;
+  color            : #ff0;
+}
 
 .spa-chat-head:hover .spa-chat-head-toggle {
   background : #aaa;

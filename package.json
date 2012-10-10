@@ -1,4 +1,4 @@
-{ "name"    : "SPA example",
+{ "name"    : "SPA",
   "version" : "0.0.2",
   "private" : true,
   "dependencies" : {

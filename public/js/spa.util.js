@@ -67,7 +67,7 @@ spa.util = (function () {
           error = makeError( 'Bad Input',
             'Setting config key |' + key_name + '| is not supported'
           );
-          console.error(error);
+          console.trace(error);
           throw error;
         }
       }

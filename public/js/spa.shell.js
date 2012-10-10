@@ -25,9 +25,9 @@ spa.shell = (function () {
       resize_interval : 200,
       main_html : String()
         + '<div class="spa-shell-head">'
-          + '<div class="spa-shell-head-logo"></div>'
-          + '<div class="spa-shell-head-acct"></div>'
-          + '<div class="spa-shell-head-search"></div>'
+          + '<div class="spa-shell-head-logo">SPA</div>'
+          + '<div class="spa-shell-head-acct">Account</div>'
+          + '<div class="spa-shell-head-search"><input type="text"/></div>'
         + '</div>'
         + '<div class="spa-shell-main">'
           + '<div class="spa-shell-main-nav"></div>'
@@ -266,14 +266,6 @@ spa.shell = (function () {
       chat_model      : spa.model.chat
     });
     spa.chat.initModule( jqueryMap.$container );
-
-    // configure and initialize chatlist
-    // spa.chatlist.configModule({
-    //  set_chat_anchor : setChatAnchor,
-    //  people_model    : spa.model.people,
-    //  chat_model      : spa.model.chat
-    // });
-    // spa.chatlist.initModule( jqueryMap.$container );
 
     // Handle URI anchor change events.
     // This is done /after/ all feature modules are configured

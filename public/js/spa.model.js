@@ -18,8 +18,8 @@ spa.model = (function (){
     stateMap = {
       user           : null,
       people_db      : TAFFY(),
-      people_cid_map : {}, // TODO use taffy here
-      people_id_map  : {}, // TODO use taffy here
+      people_cid_map : {},
+      people_id_map  : {},
       anon_user      : null,
       cid_serial     : 0
     },
@@ -29,7 +29,7 @@ spa.model = (function (){
     ;
 
   personProto = {
-    is_user : function (){ console.warn( this.cid, stateMap.user ); return this.cid === stateMap.user.cid; },
+    is_user : function (){ return this.cid === stateMap.user.cid; },
     is_anon : function (){ return this.cid === configMap.anon_id; }
   };
 
@@ -122,20 +122,17 @@ spa.model = (function (){
       callback_map, process_event;
 
 
-    process_event = function ( event_type, response ){
-      // console.warn( event_type, response );
-      // we get the event type here and then
-      // loop through and execute all the callbacks with event data
-      // as the argument. We might consider cleaning up some of the
-      // response data before passing it back to the callbacks.
+    process_event = function ( event_type, data ){
+      // We execute all the callbacks associated for the provided
+      // event_type in order using data as the callback argument.
       var i, callback,
         callback_list = callback_map[ event_type ];
 
       if ( ! callback_list ){ throw 'invalid event_type: ' + event_type; }
 
       for ( i = 0; i < callback_list.length; i++ ){
-        callback = callback_list[i];
-        callback( response );
+        callback = callback_list[ i ];
+        callback( data );
       }
     };
 
@@ -211,7 +208,7 @@ spa.model = (function (){
     };
 
     on_disconnect = function ( data ){
-      console.warn( 'disconnecting ...' );
+      // console.log( 'disconnecting ...' );
       leave_chat();
     };
 

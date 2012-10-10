@@ -15,17 +15,8 @@
 spa.data = (function (){
   var
     stateMap = { sio : null },
-    createUser, makeSio, getSio, clearSio, initModule
+    makeSio, getSio, clearSio, initModule
     ;
-
-//  createUser = function ( name, callback ) {
-//    $.ajax({
-//      url  : '/users/create',
-//      type : 'post',
-//      data : { name : name },
-//      success : callback
-//    });
-//  };
 
   makeSio = function (){
     var emit, on, socket;
@@ -61,8 +52,18 @@ spa.data = (function (){
   return {
     getSio     : getSio,
     clearSio   : clearSio,
-    // createUser : createUser,
     initModule : initModule
   };
 }());
+
+// Example create user crud call
+//   createUser = function ( name, callback ) {
+//     $.ajax({
+//       url  : '/users/create',
+//       type : 'post',
+//       data : { name : name },
+//       success : callback
+//     });
+//   };
+
 
