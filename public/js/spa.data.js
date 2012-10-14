@@ -40,11 +40,14 @@ spa.data = (function (){
     }
     return stateMap.sio;
   };
+
   clearSio = function (){
     if ( stateMap.sio ){
-      stateMap.sio.emit('disconnect');
+      stateMap.sio.disconnect();
       stateMap.sio = null;
+      return true;
     }
+    return false;
   };
 
   initModule = function (){};

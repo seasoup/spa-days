@@ -85,7 +85,7 @@ spa.chat = (function () {
     writeChat,     writeAlert,  clearChat,
     setSliderPosition,
     onClickToggle, onSubmitMsg,  onClickChatee,
-    setChateeCb,   updateChatCb, userChangeCb,
+    setChateeCb,   updateChatCb, listChangeCb,
     configModule,  initModule,
     removeSlider,  handleResize
     ;
@@ -327,7 +327,7 @@ spa.chat = (function () {
     writeChat( sender_name, msg_text, is_user );
   };
 
-  userChangeCb = function ( ){
+  listChangeCb = function ( ){
     var
       list_html = String(),
       people_db = configMap.people_model.get_db(),
@@ -442,12 +442,7 @@ spa.chat = (function () {
     // configure chat model callbacks
     configMap.chat_model.add_callback( 'setchatee',  setChateeCb  );
     configMap.chat_model.add_callback( 'updatechat', updateChatCb );
-    configMap.chat_model.add_callback( 'userchange', userChangeCb );
-
-
-    name = prompt( "What's your name?" );
-    configMap.people_model.make_user( name );
-    configMap.chat_model.join();
+    configMap.chat_model.add_callback( 'listchange', listChangeCb );
 
     jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);
     jqueryMap.$form.submit( onSubmitMsg );

@@ -27,7 +27,7 @@ spa.shell = (function () {
         + '<div class="spa-shell-head">'
           + '<div class="spa-shell-head-logo">SPA</div>'
           + '<div class="spa-shell-head-acct">Account</div>'
-          + '<div class="spa-shell-head-search"><input type="text"/></div>'
+        //+ '<div class="spa-shell-head-search"><input type="text"/></div>'
         + '</div>'
         + '<div class="spa-shell-main">'
           + '<div class="spa-shell-main-nav"></div>'
@@ -44,7 +44,7 @@ spa.shell = (function () {
     jqueryMap = {},
 
     copyAnchorMap,    setJqueryMap,   changeAnchorPart,
-    onResize,         onHashchange,   onBeforeunload,
+    onResize,         onHashchange,   onClickAcct,
     setChatAnchor,    initModule
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
@@ -62,7 +62,8 @@ spa.shell = (function () {
     var $container = stateMap.$container;
 
     jqueryMap = {
-      $container : $container
+      $container : $container,
+      $acct      : $container.find('.spa-shell-head-acct')
     };
   };
   // End DOM method /setJqueryMap/
@@ -215,11 +216,21 @@ spa.shell = (function () {
   };
   // End Event handler /onResize/
 
-  // Begin Event handler /onBeforeunload/
-  //onBeforeunload = function (){
-  //  spa.model.chat.leave();
-  //};
-  // End Event handler /onBeforeunload/
+  onClickAcct = function ( event ){
+    var acct_text, user_name, user = spa.model.people.get_user();
+    if ( user.is_anon() ){
+      user_name = prompt( "What's your name?" );
+      spa.model.people.make_user( user_name );
+      spa.model.chat.join();
+      acct_text = user_name;
+    }
+    else {
+     spa.model.people.remove_user();
+      acct_text = 'Please sign-in';
+    }
+    jqueryMap.$acct.text(acct_text);
+    return false;
+  };
   //-------------------- END EVENT HANDLERS --------------------
 
   //---------------------- BEGIN CALLBACKS ---------------------
@@ -276,9 +287,11 @@ spa.shell = (function () {
     $(window)
       .bind( 'resize',       onResize  )
       .bind( 'hashchange',   onHashchange )
-      // .bind( 'beforeunload', onBeforeunload )
       .trigger( 'hashchange' );
 
+    jqueryMap.$acct
+      .text( 'Please sign-in')
+      .click( onClickAcct );
   };
   // End PUBLIC method /initModule/
 

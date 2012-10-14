@@ -189,7 +189,7 @@
 
 .spa-chat-msg-send:hover,
 .spa-chat-msg-send.spa-x-select {
-  background-color : #444;
+  background : #444;
   color            : #ff0;
 }
 

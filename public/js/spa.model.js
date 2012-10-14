@@ -30,7 +30,7 @@ spa.model = (function (){
 
   personProto = {
     is_user : function (){ return this.cid === stateMap.user.cid; },
-    is_anon : function (){ return this.cid === configMap.anon_id; }
+    is_anon : function (){ return this.cid === stateMap.anon_user.cid; }
   };
 
   makeCid = function () { return 'c' + String(stateMap.cid_serial++); };
@@ -81,10 +81,9 @@ spa.model = (function (){
     make_user : function ( name ){
       var sio = spa.data.getSio();
       stateMap.user = this.make_person({
-        name   : name,
-        cid    : makeCid()
+        name : name,
+        cid  : makeCid()
       });
-
       sio.emit( 'adduser', name );
     },
 
@@ -114,13 +113,12 @@ spa.model = (function (){
 
   chat = (function (){
     var
-      process_event_userchange, process_event_updatechat,
+      process_event_listchange, process_event_updatechat,
       process_event_disconnect,
 
       chatee, set_chatee, leave_chat,
-      on_userchange, on_disconnect, clear_callback_map,
+      on_listchange, on_disconnect, clear_callback_map,
       callback_map, process_event;
-
 
     process_event = function ( event_type, data ){
       // We execute all the callbacks associated for the provided
@@ -136,8 +134,8 @@ spa.model = (function (){
       }
     };
 
-    process_event_userchange = function ( response ){
-      process_event( 'userchange', response );
+    process_event_listchange = function ( response ){
+      process_event( 'listchange', response );
     };
     process_event_updatechat = function ( response ){
       process_event( 'updatechat', response );
@@ -169,11 +167,10 @@ spa.model = (function (){
 
     leave_chat = function (){
       var sio = spa.data.getSio();
-      if ( sio ){ sio.emit('disconnect'); }
-      // sio.emit( 'leavechat', stateMap.user.name );
+      if ( sio ){ spa.data.clearSio(); }
     };
 
-    on_userchange = function( response ){
+    on_listchange = function( response ){
       var i, id, person_map, name, is_chatee_online = false;
 
       people.clear_db();
@@ -207,17 +204,14 @@ spa.model = (function (){
       }
     };
 
-    on_disconnect = function ( data ){
-      // console.log( 'disconnecting ...' );
-      leave_chat();
-    };
+    on_disconnect = function ( data ){ leave_chat(); };
 
     clear_callback_map = function (){
       callback_map = {
         'disconnect' : [ on_disconnect ],
         'setchatee'  : [],
         'updatechat' : [],
-        'userchange' : [ on_userchange ]
+        'listchange' : [ on_listchange ]
       };
     };
 
@@ -261,7 +255,7 @@ spa.model = (function (){
         console.log( callback_map );
       },
 
-      join  : function (){
+      join : function (){
         var sio;
         if ( stateMap.user.is_anon() ){
           console.warn( 'User must be defined before joining chat');
@@ -269,7 +263,7 @@ spa.model = (function (){
         }
 
         sio = spa.data.getSio();
-        sio.on( 'userchange', process_event_userchange );
+        sio.on( 'listchange', process_event_listchange );
         sio.on( 'updatechat', process_event_updatechat );
         sio.on( 'disconnect', process_event_disconnect );
       },
@@ -296,7 +290,6 @@ spa.model = (function (){
           );
         }
       },
-
       leave : leave_chat
     };
   }());
@@ -307,12 +300,13 @@ spa.model = (function (){
       cid   : makeCid(),
       id    : stateMap.anon_id
     });
+    stateMap.user = stateMap.anon_user;
   };
 
   return {
+    initModule : initModule,
     people     : people,
-    chat       : chat,
-    initModule : initModule
+    chat       : chat
   };
 }());
 
