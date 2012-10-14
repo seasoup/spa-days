@@ -43,7 +43,6 @@ spa.data = (function (){
 
   clearSio = function (){
     if ( stateMap.sio ){
-      stateMap.sio.disconnect();
       stateMap.sio = null;
       return true;
     }

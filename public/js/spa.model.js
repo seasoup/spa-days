@@ -113,12 +113,13 @@ spa.model = (function (){
 
   chat = (function (){
     var
+      process_event,
       process_event_listchange, process_event_updatechat,
       process_event_disconnect,
 
       chatee, set_chatee, leave_chat,
-      on_listchange, on_disconnect, clear_callback_map,
-      callback_map, process_event;
+      on_listchange, clear_callback_map,
+      callback_map;
 
     process_event = function ( event_type, data ){
       // We execute all the callbacks associated for the provided
@@ -134,14 +135,14 @@ spa.model = (function (){
       }
     };
 
-    process_event_listchange = function ( response ){
-      process_event( 'listchange', response );
+    process_event_listchange = function ( data ){
+      process_event( 'listchange', data );
     };
-    process_event_updatechat = function ( response ){
-      process_event( 'updatechat', response );
+    process_event_updatechat = function ( data ){
+      process_event( 'updatechat', data );
     };
-    process_event_disconnect =  function ( response ){
-      process_event( 'disconnect', response );
+    process_event_disconnect =  function ( data ){
+      process_event( 'disconnect', data );
     };
 
     set_chatee = function ( chatee_name ){
@@ -167,21 +168,22 @@ spa.model = (function (){
 
     leave_chat = function (){
       var sio = spa.data.getSio();
-      if ( sio ){ spa.data.clearSio(); }
+      if ( sio ){ sio.emit('disconnet'); }
+      spa.data.clearSio();
     };
 
-    on_listchange = function( response ){
+    on_listchange = function( data ){
       var i, id, person_map, name, is_chatee_online = false;
 
       people.clear_db();
 
-      for ( i = 0; i < response[0].length; i++ ) {
-        if (response[ 0 ][ i ].name ) {
-          id   = response[ 0 ][ i ]._id;
-          name = response[ 0 ][ i ].name;
+      for ( i = 0; i < data[0].length; i++ ) {
+        if ( data[ 0 ][ i ].name ) {
+          id   = data[ 0 ][ i ]._id;
+          name = data[ 0 ][ i ].name;
           person_map = { name : name };
 
-          // skip creating user, because it is already there
+          // skip creating user because we already got one
           if ( stateMap.user && stateMap.user.name === name ){ continue; }
           if ( id ){
             person_map.id  = id;
@@ -199,16 +201,14 @@ spa.model = (function (){
       stateMap.people_db.sort( 'name' );
       // if chatee is no longer online, we unset the chatee
       // and trigger a set_chatee event
-      if ( chatee && ! is_chatee_online ){
-        set_chatee('');
-      }
+      if ( chatee && ! is_chatee_online ){ set_chatee(''); }
     };
 
-    on_disconnect = function ( data ){ leave_chat(); };
-
+    // on_disconnect = function ( data ){ leave_chat(); };
     clear_callback_map = function (){
       callback_map = {
-        'disconnect' : [ on_disconnect ],
+        // 'disconnect' : [ on_disconnect ],
+        'disconnect' : [ leave_chat ],
         'setchatee'  : [],
         'updatechat' : [],
         'listchange' : [ on_listchange ]
