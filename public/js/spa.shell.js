@@ -25,7 +25,7 @@ spa.shell = (function () {
       resize_interval : 200,
       main_html : String()
         + '<div class="spa-shell-head">'
-          + '<div class="spa-shell-head-logo">SPA</div>'
+          + '<div class="spa-shell-head-logo">Single Page Web Applications: JavaScript End to End</div>'
           + '<div class="spa-shell-head-acct">Account</div>'
         //+ '<div class="spa-shell-head-search"><input type="text"/></div>'
         + '</div>'
