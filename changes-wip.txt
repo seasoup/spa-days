@@ -19,8 +19,8 @@ public/js/spa.chat.js:
       (spa-chat-msg-mine or similar) for my owned chats
     x 'to chat alone' quote should be placed in div for padding
     => add user icon next to chatters
-    => Remove 'whats your name' code from here and move to 'login' in shell
-    => Implement hidden for chat; hide chat unless logged in.
+    x Remove 'whats your name' code from here and move to 'login' in shell
+    x Implement hidden for chat; hide chat unless logged in.
     => implement timestamp?
     => have [x] button disconnect from current chat
 public/js/spa.data.js:
@@ -35,14 +35,14 @@ public/js/spa.shell.js:
     x remove beforeunload code
     x replaced onbeforeunload event with disconnect.
       this is much more reliable and efficient.
-    => wip restyle to look less cartoonish
-    => add login function here
+    x restyle to look less cartoonish
+    x add login function here
 public/css/spa.chat.css:
     x make window 32em instead of 30em wide
     x round TL chat-list-box corner 0.2em
     x clean syntax (autoformat)
 public/css/spa.shell.css
-    => wip restyle to look less cartoonish
+    x restyle to look less cartoonish
 lib/crud.js:
     x fixed update to work against multiple docs
     x mixed module camelCase and lower_case modules names,
