@@ -13,9 +13,9 @@ to use callbacks:
   spa.model.chat.set_chatee( 'fred' );
 
   // set callbacks for various events
-  spa.model.chat.add_callback( 'listchange', listChangeCb );
-  spa.model.chat.add_callback( 'chat',       chatCb );
-  spa.model.chat.add_callback( 'updatechat', updateChatCb );
+  spa.model.callBack.add( 'listchange', listChangeCb );
+  spa.model.callBack.add( 'chat',       chatCb );
+  spa.model.callBack.add( 'updatechat', updateChatCb );
 
   // ... later ...
 

@@ -45,7 +45,8 @@ spa.shell = (function () {
 
     copyAnchorMap,    setJqueryMap,   changeAnchorPart,
     onResize,         onHashchange,   onClickAcct,
-    setChatAnchor,    initModule
+    setChatAnchor,    loginCb,        logoutCb,
+    initModule
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
@@ -149,7 +150,7 @@ spa.shell = (function () {
   onHashchange = function ( event ) {
     var
       _s_chat_previous, _s_chat_proposed, s_chat_proposed,
-      anchor_map_proposed,
+      anchor_map_proposed, user = spa.model.people.get_user(),
       is_ok = true,
       anchor_map_previous = copyAnchorMap();
 
@@ -221,14 +222,10 @@ spa.shell = (function () {
     if ( user.is_anon() ){
       user_name = prompt( "What's your name?" );
       spa.model.people.make_user( user_name );
-      spa.model.chat.join();
-      acct_text = user_name;
     }
     else {
      spa.model.people.remove_user();
-      acct_text = 'Please sign-in';
     }
-    jqueryMap.$acct.text(acct_text);
     return false;
   };
   //-------------------- END EVENT HANDLERS --------------------
@@ -255,6 +252,13 @@ spa.shell = (function () {
     return changeAnchorPart({ chat : position_type });
   };
   // End callback method /setChatAnchor/
+
+  loginCb = function ( login_user ){
+    jqueryMap.$acct.text( login_user.name );
+  };
+  logoutCb = function ( logout_user ){
+    jqueryMap.$acct.text( 'Please sign-in' );
+  };
   //----------------------- END CALLBACKS ----------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
@@ -273,8 +277,9 @@ spa.shell = (function () {
     // configure and initialize chat
     spa.chat.configModule({
       set_chat_anchor : setChatAnchor,
-      people_model    : spa.model.people,
-      chat_model      : spa.model.chat
+      cb_model        : spa.model.callBack,
+      chat_model      : spa.model.chat,
+      people_model    : spa.model.people
     });
     spa.chat.initModule( jqueryMap.$container );
 
@@ -292,6 +297,9 @@ spa.shell = (function () {
     jqueryMap.$acct
       .text( 'Please sign-in')
       .click( onClickAcct );
+
+    spa.model.callBack.add('login',  loginCb  );
+    spa.model.callBack.add('logout', logoutCb );
   };
   // End PUBLIC method /initModule/
 

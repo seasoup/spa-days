@@ -53,6 +53,7 @@ spa.chat = (function () {
         slider_opened_title : true,
         slider_closed_title : true,
 
+        cb_model        : true,
         chat_model      : true,
         people_model    : true,
         set_chat_anchor : true
@@ -82,10 +83,11 @@ spa.chat = (function () {
     jqueryMap = {},
 
     setJqueryMap,  setPxSizes,   scrollChat,
-    writeChat,     writeAlert,  clearChat,
+    writeChat,     writeAlert,   clearChat,
     setSliderPosition,
     onClickToggle, onSubmitMsg,  onClickChatee,
     setChateeCb,   updateChatCb, listChangeCb,
+    loginCb,       logoutCb,
     configModule,  initModule,
     removeSlider,  handleResize
     ;
@@ -164,6 +166,13 @@ spa.chat = (function () {
   setSliderPosition = function ( position_type, callback ) {
     var
       height_px, animate_time, slider_title, toggle_text;
+
+    // position type of 'opened' is not allowed for anon user;
+    // therefore we simply return false; the shell will fix the
+    // uri and try again.
+    if ( position_type === 'opened'
+      && configMap.people_model.get_user().is_anon()
+    ){ return false; }
 
     // return true if slider already in requested position
     if ( stateMap.position_type === position_type ){
@@ -248,7 +257,8 @@ spa.chat = (function () {
 
   //------------------- BEGIN EVENT HANDLERS -------------------
   onClickToggle = function ( event ){
-    var set_chat_anchor = configMap.set_chat_anchor;
+    var
+      set_chat_anchor = configMap.set_chat_anchor;
     if ( stateMap.position_type === 'opened' ) {
       set_chat_anchor( 'closed' );
     }
@@ -264,9 +274,10 @@ spa.chat = (function () {
     configMap.chat_model.send_msg( msg_text );
     jqueryMap.$input.focus();
     jqueryMap.$send.addClass('spa-x-select');
-    setTimeout(function (){
-      jqueryMap.$send.removeClass('spa-x-select');
-    },250);
+    setTimeout(
+      function (){ jqueryMap.$send.removeClass('spa-x-select'); },
+      250
+    );
     return false;
   };
 
@@ -281,9 +292,6 @@ spa.chat = (function () {
     var
       new_chatee = arg_map.new_chatee,
       old_chatee = arg_map.old_chatee;
-
-    configMap.set_chat_anchor( 'opened' );
-
     jqueryMap.$input.focus();
     if ( ! new_chatee ){
       if ( old_chatee ){
@@ -353,6 +361,12 @@ spa.chat = (function () {
         + '</div>';
     }
     jqueryMap.$list_box.html( list_html );
+  };
+
+  loginCb  = function (){ };
+  logoutCb = function (){
+    configMap.set_chat_anchor( 'closed' );
+    jqueryMap.$title.text('Chat');
   };
 
   //---------------------- END CALLBACKS -----------------------
@@ -439,14 +453,18 @@ spa.chat = (function () {
     jqueryMap.$head.click( onClickToggle );
     stateMap.position_type = 'closed';
 
-    // configure chat model callbacks
-    configMap.chat_model.add_callback( 'setchatee',  setChateeCb  );
-    configMap.chat_model.add_callback( 'updatechat', updateChatCb );
-    configMap.chat_model.add_callback( 'listchange', listChangeCb );
+    // configure model callbacks
+    configMap.cb_model.add( 'setchatee',  setChateeCb  );
+    configMap.cb_model.add( 'updatechat', updateChatCb );
+    configMap.cb_model.add( 'listchange', listChangeCb );
+    configMap.cb_model.add( 'login',      loginCb      );
+    configMap.cb_model.add( 'logout',     logoutCb     );
 
+    // bind actions
     jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);
     jqueryMap.$form.submit( onSubmitMsg );
     jqueryMap.$send.click(  onSubmitMsg );
+
 
     return true;
   };

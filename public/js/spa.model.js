@@ -24,7 +24,7 @@ spa.model = (function (){
       cid_serial     : 0
     },
 
-    personProto,makeCid, people, chat,
+    personProto, makeCid, people, chat, callBack,
     initModule
     ;
 
@@ -35,14 +35,94 @@ spa.model = (function (){
 
   makeCid = function () { return 'c' + String(stateMap.cid_serial++); };
 
-  people = {
-    get_db : function (){ return stateMap.people_db; },
-    get_cid_person : function ( cid ){
-      return stateMap.people_cid_map[ cid ];
-    },
-    get_user : function (){ return stateMap.user; },
+  callBack = (function (){
+    var
+      add_cb, clear_cb_map, clear_cb_type, debug_cb_map,
+      execute_cb, set_baseline_cb_map, remove_cb,
+      baseline_cb_map = {}, callback_map = {};
 
-    clear_db : function (){
+
+    add_cb = function ( event_name, callback ){
+      var i, callback_list = callback_map [ event_name ];
+      if ( ! callback_list ){ throw 'invalid event_name' + event_name; }
+
+      for ( i = 0; i < callback_list.length; i++ ){
+        if ( callback_list[i] === callback ){
+          return false;
+        }
+      }
+      callback_list.push( callback );
+      return true;
+    };
+
+    clear_cb_map = function (){
+      callback_map = {};
+      var key;
+      for ( key in baseline_cb_map ){
+        if ( baseline_cb_map.hasOwnProperty( key ) ){
+          callback_map[ key ] = baseline_cb_map[key].slice(0);
+        }
+      }
+    };
+
+    clear_cb_type = function ( event_name ){
+      var callback_list = callback_map[ event_name ];
+      if ( ! callback_list ){ throw 'invalid event_name'; }
+      callback_map[ event_name ] = [];
+    };
+
+    debug_cb_map = function (){ console.log( callback_map ); };
+
+    execute_cb = function ( event_name, data ){
+    // We execute all the callbacks associated for the provided
+    // event_name in order using data as the callback argument.
+      var i, callback,
+        callback_list = callback_map[ event_name ];
+
+      if ( ! callback_list ){ throw 'invalid event_name: ' + event_name; }
+
+      for ( i = 0; i < callback_list.length; i++ ){
+        callback = callback_list[ i ];
+        callback( data );
+      }
+    };
+
+    set_baseline_cb_map = function ( baseline_map ){
+      baseline_cb_map = baseline_map;
+    };
+
+    remove_cb = function ( event_name, callback ){
+      var i, new_list = [],
+        callback_list = callback_map [ event_name ];
+
+      if ( ! callback_list ){ throw 'invalid event_name'; }
+
+      for ( i = 0; i < callback_list.length; i++ ){
+        if ( callback_list[i] === callback ){ continue; }
+        new_list.push( callback_list[ i ] );
+      }
+      callback_map[ event_name ] = new_list;
+      return true;
+    };
+
+    return {
+      add              : add_cb,
+      clear_map        : clear_cb_map,
+      clear_type       : clear_cb_type,
+      debug_map        : debug_cb_map,
+      execute          : execute_cb,
+      set_baseline_map : set_baseline_cb_map,
+      remove           : remove_cb
+    };
+
+  }());
+
+  people = (function (){
+    var
+      clear_db, get_cid_person, get_db, get_user,
+      make_person, make_user, remove_person, remove_user;
+
+    clear_db = function (){
       var user = stateMap.user;
       stateMap.people_db      = TAFFY();
       stateMap.people_cid_map = {};
@@ -54,9 +134,17 @@ spa.model = (function (){
           stateMap.people_id_map[ user.id ] = user;
         }
       }
-    },
+    };
 
-    make_person : function ( arg_map ){
+    get_cid_person = function ( cid ){
+      return stateMap.people_cid_map[ cid ];
+    };
+
+    get_db = function (){ return stateMap.people_db; };
+
+    get_user = function (){ return stateMap.user; };
+
+    make_person = function ( arg_map ){
       var person,
         cid   = arg_map.cid,
         id    = arg_map.id,
@@ -76,18 +164,19 @@ spa.model = (function (){
 
       stateMap.people_db.insert( person );
       return person;
-    },
+    };
 
-    make_user : function ( name ){
+    make_user = function ( name ){
       var sio = spa.data.getSio();
-      stateMap.user = this.make_person({
+      stateMap.user = make_person({
         name : name,
         cid  : makeCid()
       });
       sio.emit( 'adduser', name );
-    },
+      callBack.execute( 'login', stateMap.user );
+    };
 
-    remove_person : function ( person ){
+    remove_person = function ( person ){
       if ( ! person ){ return false; }
       // can't remove anonymous user
       if ( person.id === configMap.anon_id ){
@@ -100,49 +189,91 @@ spa.model = (function (){
         delete stateMap.people_cid_map[ person.id ];
       }
       return true;
-    },
+    };
 
-    remove_user : function (){
+    remove_user = function (){
       var is_removed, user = stateMap.user;
-      is_removed = this.remove_person( user );
+      callBack.execute( 'logout', user );
+      is_removed = remove_person( user );
       if ( ! is_removed ){ return is_removed; }
       stateMap.user = stateMap.anon_user;
       return true;
-    }
-  };
+    };
+
+    return {
+      clear_db       : clear_db,
+      get_cid_person : get_cid_person,
+      get_db         : get_db,
+      get_user       : get_user,
+      make_person    : make_person,
+      make_user      : make_user,
+      remove_person  : remove_person,
+      remove_user    : remove_user
+    };
+  }());
 
   chat = (function (){
     var
-      process_event,
-      process_event_listchange, process_event_updatechat,
-      process_event_disconnect,
+      chatee,
 
-      chatee, set_chatee, leave_chat,
-      on_listchange, clear_callback_map,
-      callback_map;
+      execute_listchange_cb, execute_updatechat_cb,
+      execute_disconnect_cb,
 
-    process_event = function ( event_type, data ){
-      // We execute all the callbacks associated for the provided
-      // event_type in order using data as the callback argument.
-      var i, callback,
-        callback_list = callback_map[ event_type ];
+      get_chatee, join_chat, leave_chat, send_msg,
+      set_chatee, update_list
+      ;
 
-      if ( ! callback_list ){ throw 'invalid event_type: ' + event_type; }
 
-      for ( i = 0; i < callback_list.length; i++ ){
-        callback = callback_list[ i ];
-        callback( data );
+    execute_listchange_cb = function ( data ){
+      callBack.execute( 'listchange', data );
+    };
+    execute_updatechat_cb = function ( data ){
+      callBack.execute( 'updatechat', data );
+    };
+    execute_disconnect_cb =  function ( data ){
+      callBack.execute( 'disconnect', data );
+    };
+
+    get_chatee = function (){ return chatee; };
+
+    join_chat  = function (){
+      var sio;
+      if ( stateMap.user.is_anon() ){
+        console.warn( 'User must be defined before joining chat');
+        return false;
       }
+
+      sio = spa.data.getSio();
+      sio.on( 'listchange', execute_listchange_cb );
+      sio.on( 'updatechat', execute_updatechat_cb );
+      sio.on( 'disconnect', execute_disconnect_cb );
     };
 
-    process_event_listchange = function ( data ){
-      process_event( 'listchange', data );
+    leave_chat = function (){
+      var sio = spa.data.getSio();
+      if ( sio ){
+        sio.emit( 'leavechat' );
+      }
+      // spa.data.clearSio();
     };
-    process_event_updatechat = function ( data ){
-      process_event( 'updatechat', data );
-    };
-    process_event_disconnect =  function ( data ){
-      process_event( 'disconnect', data );
+
+    send_msg = function ( msg_text ){
+      var sio = spa.data.getSio();
+
+      if ( ! sio ){ return false; }
+
+      if ( stateMap.user && chatee ){
+        sio.emit( 'updatechat', {
+          chatee  : chatee.name,
+          user    : stateMap.user.name,
+          message : msg_text
+        });
+
+        callBack.execute(
+          'updatechat',
+          [ stateMap.user.name, msg_text ]
+        );
+      }
     };
 
     set_chatee = function ( chatee_name ){
@@ -158,7 +289,7 @@ spa.model = (function (){
       else {
         new_chatee = null;
       }
-      process_event(
+      callBack.execute(
         'setchatee',
         { old_chatee : chatee, new_chatee : new_chatee }
       );
@@ -166,13 +297,7 @@ spa.model = (function (){
       return true;
     };
 
-    leave_chat = function (){
-      var sio = spa.data.getSio();
-      if ( sio ){ sio.emit('disconnet'); }
-      spa.data.clearSio();
-    };
-
-    on_listchange = function( data ){
+    update_list = function( data ){
       var i, id, person_map, name, is_chatee_online = false;
 
       people.clear_db();
@@ -204,97 +329,28 @@ spa.model = (function (){
       if ( chatee && ! is_chatee_online ){ set_chatee(''); }
     };
 
-    // on_disconnect = function ( data ){ leave_chat(); };
-    clear_callback_map = function (){
-      callback_map = {
-        // 'disconnect' : [ on_disconnect ],
-        'disconnect' : [ leave_chat ],
-        'setchatee'  : [],
-        'updatechat' : [],
-        'listchange' : [ on_listchange ]
-      };
-    };
-
-    clear_callback_map();
-
     return {
-      add_callback : function ( event_type, callback ){
-        var i, callback_list = callback_map [ event_type ];
-        if ( ! callback_list ){ throw 'invalid event_type' + event_type; }
-
-        for ( i = 0; i < callback_list.length; i++ ){
-          if ( callback_list[i] === callback ){
-            return false;
-          }
-        }
-        callback_list.push( callback );
-        return true;
-      },
-
-      remove_callback : function ( event_type, callback ){
-        var i, new_list = [],
-          callback_list = callback_map [ event_type ];
-
-        if ( ! callback_list ){ throw 'invalid event_type'; }
-
-        for ( i = 0; i < callback_list.length; i++ ){
-          if ( callback_list[i] === callback ){ continue; }
-          new_list.push( callback_list[ i ] );
-        }
-        callback_map[ event_type ] = new_list;
-        return true;
-      },
-
-      clear_callback_type : function ( event_type ){
-        var callback_list = callback_map[ event_type ];
-        if ( ! callback_list ){ throw 'invalid event_type'; }
-        callback_map[ event_type ] = [];
-      },
-
-      debug_callbacks : function (){
-        console.log( callback_map );
-      },
-
-      join : function (){
-        var sio;
-        if ( stateMap.user.is_anon() ){
-          console.warn( 'User must be defined before joining chat');
-          return false;
-        }
-
-        sio = spa.data.getSio();
-        sio.on( 'listchange', process_event_listchange );
-        sio.on( 'updatechat', process_event_updatechat );
-        sio.on( 'disconnect', process_event_disconnect );
-      },
-
-      set_chatee : set_chatee,
-
-      get_chatee : function (){ return chatee; },
-
-      send_msg : function ( msg_text ){
-        var sio = spa.data.getSio();
-
-        if ( ! sio ){ return false; }
-
-        if ( stateMap.user && chatee ){
-          sio.emit( 'updatechat', {
-            chatee  : chatee.name,
-            user    : stateMap.user.name,
-            message : msg_text
-          });
-
-          process_event(
-            'updatechat',
-            [ stateMap.user.name, msg_text ]
-          );
-        }
-      },
-      leave : leave_chat
+      get_chatee  : get_chatee,
+      join        : join_chat,
+      leave       : leave_chat,
+      send_msg    : send_msg,
+      set_chatee  : set_chatee,
+      update_list : update_list
     };
   }());
 
+
   initModule = function (){
+    callBack.set_baseline_map({
+      login      : [ chat.join ],
+      logout     : [ chat.leave ],
+      disconnect : [ chat.leave ],
+      setchatee  : [],
+      updatechat : [],
+      listchange : [ chat.update_list ]
+    });
+    callBack.clear_map();
+
     stateMap.anon_user = people.make_person({
       name  : 'anonymous',
       cid   : makeCid(),
@@ -305,8 +361,9 @@ spa.model = (function (){
 
   return {
     initModule : initModule,
-    people     : people,
-    chat       : chat
+    callBack   : callBack,
+    chat       : chat,
+    people     : people
   };
 }());
 
