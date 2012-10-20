@@ -318,8 +318,8 @@ spa.chat = (function () {
 
   updateChatCb = function ( data ){
     var
-      sender_name = data [ 0 ],
-      msg_text    = data [ 1 ],
+      sender_name = data[ 0 ],
+      msg_text    = data[ 1 ],
       user        = configMap.people_model.get_user(),
       chatee      = configMap.chat_model.get_chatee() || {},
       is_user     = false;
