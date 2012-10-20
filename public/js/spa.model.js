@@ -44,7 +44,7 @@ spa.model = (function (){
 
     add_cb = function ( event_name, callback ){
       var i, callback_list = callback_map [ event_name ];
-      if ( ! callback_list ){ throw 'invalid event_name' + event_name; }
+      if ( ! callback_list ){ throw 'invalid event_name:' + event_name; }
 
       for ( i = 0; i < callback_list.length; i++ ){
         if ( callback_list[i] === callback ){
@@ -67,7 +67,7 @@ spa.model = (function (){
 
     clear_cb_type = function ( event_name ){
       var callback_list = callback_map[ event_name ];
-      if ( ! callback_list ){ throw 'invalid event_name'; }
+      if ( ! callback_list ){ throw 'invalid event_name: ' + event_name; }
       callback_map[ event_name ] = [];
     };
 
@@ -95,7 +95,7 @@ spa.model = (function (){
       var i, new_list = [],
         callback_list = callback_map [ event_name ];
 
-      if ( ! callback_list ){ throw 'invalid event_name'; }
+      if ( ! callback_list ){ throw 'invalid event_name: ' + event_name; }
 
       for ( i = 0; i < callback_list.length; i++ ){
         if ( callback_list[i] === callback ){ continue; }
@@ -342,12 +342,13 @@ spa.model = (function (){
 
   initModule = function (){
     callBack.set_baseline_map({
+      listchange : [ chat.update_list ],
       login      : [ chat.join ],
       logout     : [ chat.leave ],
       disconnect : [ chat.leave ],
       setchatee  : [],
-      updatechat : [],
-      listchange : [ chat.update_list ]
+      updateavtr : [],
+      updatechat : []
     });
     callBack.clear_map();
 

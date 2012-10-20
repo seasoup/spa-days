@@ -67,7 +67,7 @@ spa.shell = (function () {
     jqueryMap = {
       $container : $container,
       $acct      : $container.find('.spa-shell-head-acct'),
-      $nav       : $container.find('.nav')
+      $nav       : $container.find('.spa-shell-main-nav')
     };
   };
   // End DOM method /setJqueryMap/

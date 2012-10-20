@@ -141,32 +141,21 @@ spa.avtr = (function () {
 
   listChangeCb = function (){
     var
-      list_html = String(),
       people_db = configMap.people_model.get_db(),
       chatee    = configMap.chat_model.get_chatee();
 
-    people_db().each( function (person, idx ){
-      // Only add or subtract avatars here; their position should be
-      // updated in the updateAvatarCb updated above
-      var select_class = '';
-      if ( person.is_anon() || person.is_user() ){ return true;}
-      if ( chatee && chatee.cid === person.cid ){
-        select_class=' spa-x-select';
-      }
-      list_html
-        += '<div class="spa-chat-list-name'
-        +  select_class + '" rel="' + person.cid + '">'
-        +  person.name + '</div>';
-    });
-
-    if ( ! list_html ) {
-      list_html = String()
-        + '<div class="spa-chat-list-note">'
-          + 'To chat alone is the fate of all great souls...<br><br>'
-          + 'No one is online'
-        + '</div>';
-    }
-    jqueryMap.$list_box.html( list_html );
+    //people_db().each( function (person, idx ){
+    //  // Only add or subtract avatars here; their position should be
+    //  // updated in the updateAvatarCb updated above
+    //  if ( person.is_anon() || person.is_user() ){ return true;}
+    //  if ( chatee && chatee.cid === person.cid ){
+    //    select_class=' spa-x-select';
+    //  }
+    //  list_html
+    //    += '<div class="spa-chat-list-name'
+    //    +  select_class + '" rel="' + person.cid + '">'
+    //    +  person.name + '</div>';
+    //});
   };
 
   loginCb  = function (){
@@ -217,7 +206,7 @@ spa.avtr = (function () {
     // configure model callbacks
     configMap.cb_model.add( 'setchatee',  setChateeCb  );
     // similar to 'updatechat'
-    configMap.cb_model.add( 'updateavatar', updateAvatarCb );
+    configMap.cb_model.add( 'updateavtr', updateAvatarCb );
     // similar to 'listchange'
     configMap.cb_model.add( 'listchange', listChangeCb );
     configMap.cb_model.add( 'login',      loginCb      );
