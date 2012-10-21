@@ -10,8 +10,8 @@
     "is_online" : {
       "type": "boolean"
     },
-    "phone": { 
-      "type": "string"
+    "css_map": {
+      "type": "object"
     }
   },
   "additionalProperties": false

@@ -27,7 +27,7 @@ module.exports = function( app ) {
       });
 
       app.get( '/:object/list', function ( req, res ) {
-        crud.read( req.params.object, {}, function ( result ) {
+        crud.read( req.params.object, {}, {}, function ( result ) {
           res.send( result );
         });
       });
@@ -41,7 +41,7 @@ module.exports = function( app ) {
       app.get( '/:object/read/:id', function ( req, res ) {
         var find_map = { _id: ObjectID( req.params.id ) };
 
-        crud.read( req.params.object, find_map, function ( err, result ) {
+        crud.read( req.params.object, find_map, {}, function ( err, result ) {
           res.send( result );
         });
       });

@@ -230,7 +230,7 @@ spa.chat = (function () {
   scrollChat = function() {
     var $msg_log = jqueryMap.$msg_log;
     $msg_log.animate(
-      { scrollTop : $msg_log.prop('scrollHeight') - $msg_log.height() },
+      { scrollTop : $msg_log.prop( 'scrollHeight' ) - $msg_log.height() },
       150
     );
   };
@@ -273,9 +273,9 @@ spa.chat = (function () {
     if ( msg_text.trim() === '' ){ return false; }
     configMap.chat_model.send_msg( msg_text );
     jqueryMap.$input.focus();
-    jqueryMap.$send.addClass('spa-x-select');
+    jqueryMap.$send.addClass( 'spa-x-select' );
     setTimeout(
-      function (){ jqueryMap.$send.removeClass('spa-x-select'); },
+      function (){ jqueryMap.$send.removeClass( 'spa-x-select' ); },
       250
     );
     return false;
@@ -305,11 +305,11 @@ spa.chat = (function () {
     }
 
     jqueryMap.$list_box
-      .find( '.spa-chat-list-name')
-      .removeClass('spa-x-select')
+      .find( '.spa-chat-list-name' )
+      .removeClass( 'spa-x-select' )
       .end()
-      .find('[rel=' + arg_map.new_chatee.cid + ']')
-      .addClass('spa-x-select');
+      .find( '[rel=' + arg_map.new_chatee.cid + ']' )
+      .addClass( 'spa-x-select' );
 
     writeAlert( 'Now chatting with ' + arg_map.new_chatee.name );
     jqueryMap.$title.text( 'Chat with ' + arg_map.new_chatee.name );
@@ -363,10 +363,13 @@ spa.chat = (function () {
     jqueryMap.$list_box.html( list_html );
   };
 
-  loginCb  = function (){ };
+  loginCb  = function (){
+    configMap.set_chat_anchor( 'opened' );
+  };
+
   logoutCb = function (){
     configMap.set_chat_anchor( 'closed' );
-    jqueryMap.$title.text('Chat');
+    jqueryMap.$title.text( 'Chat' );
   };
 
   //---------------------- END CALLBACKS -----------------------
@@ -420,7 +423,7 @@ spa.chat = (function () {
 
   // Begin public method /initModule/
   //
-  // Example    : spa.chat.initModule( $('spa') );
+  // Example    : spa.chat.initModule( $( 'spa' ) );
   //
   // Purpose    :
   //   Directs the module to begin offering its feature to the user.

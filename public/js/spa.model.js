@@ -13,13 +13,13 @@
 /*global TAFFY, $, spa */
 
 spa.model = (function (){
+  "use strict";
   var
     configMap = { anon_id : 0 },
     stateMap = {
       user           : null,
       people_db      : TAFFY(),
       people_cid_map : {},
-      people_id_map  : {},
       anon_user      : null,
       cid_serial     : 0
     },
@@ -42,9 +42,9 @@ spa.model = (function (){
       baseline_cb_map = {}, callback_map = {};
 
 
-    add_cb = function ( event_name, callback ){
-      var i, callback_list = callback_map [ event_name ];
-      if ( ! callback_list ){ throw 'invalid event_name:' + event_name; }
+    add_cb = function ( cb_name, callback ){
+      var i, callback_list = callback_map [ cb_name ];
+      if ( ! callback_list ){ throw 'invalid cb_name:' + cb_name; }
 
       for ( i = 0; i < callback_list.length; i++ ){
         if ( callback_list[i] === callback ){
@@ -57,29 +57,30 @@ spa.model = (function (){
 
     clear_cb_map = function (){
       callback_map = {};
-      var key;
-      for ( key in baseline_cb_map ){
-        if ( baseline_cb_map.hasOwnProperty( key ) ){
-          callback_map[ key ] = baseline_cb_map[key].slice(0);
+      var cb_name;
+      for ( cb_name in baseline_cb_map ){
+        if ( baseline_cb_map.hasOwnProperty( cb_name ) ){
+          callback_map[ cb_name ]
+            = baseline_cb_map[ cb_name ].slice( 0 );
         }
       }
     };
 
-    clear_cb_type = function ( event_name ){
-      var callback_list = callback_map[ event_name ];
-      if ( ! callback_list ){ throw 'invalid event_name: ' + event_name; }
-      callback_map[ event_name ] = [];
+    clear_cb_type = function ( cb_name ){
+      var callback_list = callback_map[ cb_name ];
+      if ( ! callback_list ){ throw 'invalid cb_name: ' + cb_name; }
+      callback_map[ cb_name ] = baseline_cb_map[ cb_name ].slice( 0 );
     };
 
     debug_cb_map = function (){ console.log( callback_map ); };
 
-    execute_cb = function ( event_name, data ){
+    execute_cb = function ( cb_name, data ){
     // We execute all the callbacks associated for the provided
-    // event_name in order using data as the callback argument.
+    // cb_name in order using data as the callback argument.
       var i, callback,
-        callback_list = callback_map[ event_name ];
+        callback_list = callback_map[ cb_name ];
 
-      if ( ! callback_list ){ throw 'invalid event_name: ' + event_name; }
+      if ( ! callback_list ){ throw 'invalid cb_name: ' + cb_name; }
 
       for ( i = 0; i < callback_list.length; i++ ){
         callback = callback_list[ i ];
@@ -91,17 +92,17 @@ spa.model = (function (){
       baseline_cb_map = baseline_map;
     };
 
-    remove_cb = function ( event_name, callback ){
+    remove_cb = function ( cb_name, callback ){
       var i, new_list = [],
-        callback_list = callback_map [ event_name ];
+        callback_list = callback_map [ cb_name ];
 
-      if ( ! callback_list ){ throw 'invalid event_name: ' + event_name; }
+      if ( ! callback_list ){ throw 'invalid cb_name: ' + cb_name; }
 
       for ( i = 0; i < callback_list.length; i++ ){
         if ( callback_list[i] === callback ){ continue; }
         new_list.push( callback_list[ i ] );
       }
-      callback_map[ event_name ] = new_list;
+      callback_map[ cb_name ] = new_list;
       return true;
     };
 
@@ -114,26 +115,28 @@ spa.model = (function (){
       set_baseline_map : set_baseline_cb_map,
       remove           : remove_cb
     };
-
   }());
 
   people = (function (){
     var
-      clear_db, get_cid_person, get_db, get_user,
+      clear_db, get_cid_person, get_db, get_user, complete_signin,
       make_person, make_user, remove_person, remove_user;
 
     clear_db = function (){
       var user = stateMap.user;
       stateMap.people_db      = TAFFY();
       stateMap.people_cid_map = {};
-      stateMap.people_id_map  = {};
       if ( user ){
         stateMap.people_db.insert( user );
         stateMap.people_cid_map[ user.cid ] = user;
-        if ( user.id ){
-          stateMap.people_id_map[ user.id ] = user;
-        }
       }
+    };
+
+    complete_signin = function ( user_list ){
+      var user_map = user_list[ 0 ];
+      stateMap.user.cid = user_map._id;
+      stateMap.user.id  = user_map._id;
+      callBack.execute( 'login', stateMap.user );
     };
 
     get_cid_person = function ( cid ){
@@ -146,21 +149,21 @@ spa.model = (function (){
 
     make_person = function ( arg_map ){
       var person,
-        cid   = arg_map.cid,
-        id    = arg_map.id,
-        name  = arg_map.name;
+        cid     = arg_map.cid,
+        css_map = arg_map.css_map,
+        id      = arg_map.id,
+        name    = arg_map.name;
 
       if ( ! cid || ! name ){ throw 'client id and name required'; }
 
-      person      = Object.create( personProto );
-      person.cid  = cid;
-      person.name = name;
+      person         = Object.create( personProto );
+      person.cid     = cid;
+      person.name    = name;
+      person.css_map = css_map;
 
       stateMap.people_cid_map[ cid ] = person;
-      if ( id ){
-        person.id = id;
-        stateMap.people_id_map[ id ] = person;
-      }
+
+      if ( id ){ person.id = id; }
 
       stateMap.people_db.insert( person );
       return person;
@@ -169,11 +172,16 @@ spa.model = (function (){
     make_user = function ( name ){
       var sio = spa.data.getSio();
       stateMap.user = make_person({
-        name : name,
-        cid  : makeCid()
+        cid     : makeCid(),
+        css_map : { top : 0, left : 0, 'background-color' : '#800' },
+        name    : name
       });
-      sio.emit( 'adduser', name );
-      callBack.execute( 'login', stateMap.user );
+      sio.emit( 'adduser', {
+        cid     : stateMap.user.cid,
+        css_map : stateMap.user.css_map,
+        name    : stateMap.user.name
+      });
+      sio.on( 'userupdate', complete_signin );
     };
 
     remove_person = function ( person ){
@@ -212,6 +220,8 @@ spa.model = (function (){
     };
   }());
 
+
+
   chat = (function (){
     var
       chatee,
@@ -222,7 +232,6 @@ spa.model = (function (){
       get_chatee, join_chat, leave_chat, send_msg,
       set_chatee, update_list
       ;
-
 
     execute_listchange_cb = function ( data ){
       callBack.execute( 'listchange', data );
@@ -236,7 +245,7 @@ spa.model = (function (){
 
     get_chatee = function (){ return chatee; };
 
-    join_chat  = function (){
+    join_chat  = function ( ){
       var sio;
       if ( stateMap.user.is_anon() ){
         console.warn( 'User must be defined before joining chat');
@@ -254,7 +263,7 @@ spa.model = (function (){
       if ( sio ){
         sio.emit( 'leavechat' );
       }
-      // spa.data.clearSio();
+      // spa.data.clearSio(); //?
     };
 
     send_msg = function ( msg_text ){
@@ -298,34 +307,38 @@ spa.model = (function (){
     };
 
     update_list = function( data ){
-      var i, id, person_map, name, is_chatee_online = false;
+      var i, return_map, cid, person_map, name, user_map,
+        is_chatee_online = false;
 
       people.clear_db();
 
-      for ( i = 0; i < data[0].length; i++ ) {
-        if ( data[ 0 ][ i ].name ) {
-          id   = data[ 0 ][ i ]._id;
-          name = data[ 0 ][ i ].name;
-          person_map = { name : name };
 
-          // skip creating user because we already got one
-          if ( stateMap.user && stateMap.user.name === name ){ continue; }
-          if ( id ){
-            person_map.id  = id;
-            person_map.cid = id;
-          }
-          else {
-            person_map.cid = makeCid();
-          }
-          people.make_person( person_map );
-          if ( chatee && chatee.name === name ){
-            is_chatee_online = true;
-          }
+      PERSON:
+      for ( i = 0; i < data[ 0 ].length; i++ ) {
+        return_map = data[ 0 ][ i ];
+
+        if ( ! return_map.name ) { continue PERSON; }
+        if ( stateMap.user && stateMap.user.id === return_map._id ){
+          continue PERSON;
         }
+
+        person_map = {
+          cid     : return_map._id,
+          id      : return_map._id,
+          name    : return_map.name,
+          css_map : return_map.css_map
+        };
+
+        if ( chatee && chatee.id === person_map.id ){
+          is_chatee_online = true;
+        }
+        people.make_person( person_map );
       }
+
       stateMap.people_db.sort( 'name' );
-      // if chatee is no longer online, we unset the chatee
-      // and trigger a set_chatee event
+
+      // If chatee is no longer online, we unset the chatee
+      // which triggers the 'setchatee' callbacks
       if ( chatee && ! is_chatee_online ){ set_chatee(''); }
     };
 
