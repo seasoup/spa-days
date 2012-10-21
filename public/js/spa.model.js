@@ -117,7 +117,7 @@ spa.model = (function (){
     };
   }());
 
-  people = (function (){
+  people = ( function () {
     var
       clear_db, get_cid_person, get_db, get_user, complete_signin,
       make_person, make_user, remove_person, remove_user;
@@ -134,8 +134,10 @@ spa.model = (function (){
 
     complete_signin = function ( user_list ){
       var user_map = user_list[ 0 ];
+      delete stateMap.people_cid_map[ user_map.cid ];
       stateMap.user.cid = user_map._id;
       stateMap.user.id  = user_map._id;
+      stateMap.people_cid_map[ user_map._id ] = stateMap.user;
       callBack.execute( 'login', stateMap.user );
     };
 
@@ -221,7 +223,6 @@ spa.model = (function (){
   }());
 
 
-
   chat = (function (){
     var
       chatee,
@@ -233,14 +234,14 @@ spa.model = (function (){
       set_chatee, update_list
       ;
 
-    execute_listchange_cb = function ( data ){
-      callBack.execute( 'listchange', data );
+    execute_listchange_cb = function ( arg_list ){
+      callBack.execute( 'listchange', arg_list );
     };
-    execute_updatechat_cb = function ( data ){
-      callBack.execute( 'updatechat', data );
+    execute_updatechat_cb = function ( arg_list ){
+      callBack.execute( 'updatechat', arg_list );
     };
-    execute_disconnect_cb =  function ( data ){
-      callBack.execute( 'disconnect', data );
+    execute_disconnect_cb =  function ( arg_list ){
+      callBack.execute( 'disconnect', arg_list );
     };
 
     get_chatee = function (){ return chatee; };
@@ -267,31 +268,30 @@ spa.model = (function (){
     };
 
     send_msg = function ( msg_text ){
-      var sio = spa.data.getSio();
+      var msg_map, sio = spa.data.getSio();
 
       if ( ! sio ){ return false; }
-
-      if ( stateMap.user && chatee ){
-        sio.emit( 'updatechat', {
-          chatee  : chatee.name,
-          user    : stateMap.user.name,
-          message : msg_text
-        });
-
-        callBack.execute(
-          'updatechat',
-          [ stateMap.user.name, msg_text ]
-        );
+      if ( ! ( stateMap.user && chatee ) ){
+        return false;
       }
+
+      msg_map = {
+        dest_id   : chatee.id,
+        dest_name : chatee.name,
+        sender_id : stateMap.user.id,
+        msg_text  : msg_text
+      };
+
+      // the callback is triggered so we can show our outgoing messages
+      execute_updatechat_cb( [ msg_map] );
+      sio.emit( 'updatechat', msg_map );
     };
 
-    set_chatee = function ( chatee_name ){
-      var people_db, chatee_list, new_chatee;
-      people_db = people.get_db();
-      chatee_list = people_db({ name : chatee_name || '' }).get();
-      if ( chatee_list.length > 0 ){
-        new_chatee = chatee_list[ 0 ];
-        if ( chatee && chatee.name === new_chatee.name ){
+    set_chatee = function ( chatee_id ){
+      var people_db, new_chatee;
+      new_chatee  = stateMap.people_cid_map[ chatee_id ];
+      if ( new_chatee ){
+        if ( chatee && chatee.id === new_chatee.id ){
           return false;
         }
       }
@@ -306,33 +306,35 @@ spa.model = (function (){
       return true;
     };
 
-    update_list = function( data ){
-      var i, return_map, cid, person_map, name, user_map,
+    update_list = function( arg_list ){
+      var i, person_map, make_person_map,
+        person_list      = arg_list[ 0 ],
         is_chatee_online = false;
 
       people.clear_db();
 
-
       PERSON:
-      for ( i = 0; i < data[ 0 ].length; i++ ) {
-        return_map = data[ 0 ][ i ];
+      for ( i = 0; i < person_list.length; i++ ) {
+        person_map = person_list[ i ];
 
-        if ( ! return_map.name ) { continue PERSON; }
-        if ( stateMap.user && stateMap.user.id === return_map._id ){
+        if ( ! person_map.name ) { continue PERSON; }
+
+        // skip browser user
+        if ( stateMap.user && stateMap.user.id === person_map._id ){
           continue PERSON;
         }
 
-        person_map = {
-          cid     : return_map._id,
-          id      : return_map._id,
-          name    : return_map.name,
-          css_map : return_map.css_map
+        make_person_map = {
+          cid     : person_map._id,
+          id      : person_map._id,
+          name    : person_map.name,
+          css_map : person_map.css_map
         };
 
-        if ( chatee && chatee.id === person_map.id ){
+        if ( chatee && chatee.id === make_person_map.id ){
           is_chatee_online = true;
         }
-        people.make_person( person_map );
+        people.make_person( make_person_map );
       }
 
       stateMap.people_db.sort( 'name' );

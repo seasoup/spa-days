@@ -282,8 +282,11 @@ spa.chat = (function () {
   };
 
   onClickChatee = function () {
-    var $this = $(this), chatee_name = $this.text();
-    configMap.chat_model.set_chatee( chatee_name );
+    var
+      $clicked  = $(this),
+      chatee_id = $clicked.attr( 'rel' );
+
+    configMap.chat_model.set_chatee( chatee_id );
   };
   //-------------------- END EVENT HANDLERS --------------------
 
@@ -292,6 +295,7 @@ spa.chat = (function () {
     var
       new_chatee = arg_map.new_chatee,
       old_chatee = arg_map.old_chatee;
+
     jqueryMap.$input.focus();
     if ( ! new_chatee ){
       if ( old_chatee ){
@@ -308,7 +312,7 @@ spa.chat = (function () {
       .find( '.spa-chat-list-name' )
       .removeClass( 'spa-x-select' )
       .end()
-      .find( '[rel=' + arg_map.new_chatee.cid + ']' )
+      .find( '[rel=' + arg_map.new_chatee.id + ']' )
       .addClass( 'spa-x-select' );
 
     writeAlert( 'Now chatting with ' + arg_map.new_chatee.name );
@@ -316,23 +320,35 @@ spa.chat = (function () {
     return true;
   };
 
-  updateChatCb = function ( data ){
+  updateChatCb = function ( arg_list ){
     var
-      sender_name = data[ 0 ],
-      msg_text    = data[ 1 ],
-      user        = configMap.people_model.get_user(),
-      chatee      = configMap.chat_model.get_chatee() || {},
-      is_user     = false;
+      is_user,
+      msg_map   = arg_list[ 0 ],
+      dest_id   = msg_map.dest_id,
+      dest_name = msg_map.dest_name,
+      sender_id = msg_map.sender_id,
+      msg_text  = msg_map.msg_text,
+      chatee    = configMap.chat_model.get_chatee() || {},
+      sender  = configMap.people_model.get_cid_person( sender_id )
+      ;
 
-    jqueryMap.$input.val( '' );
-    jqueryMap.$input.focus();
-
-    is_user = sender_name === user.name;
-
-    if ( ! ( is_user || sender_name === chatee.name ) ){
-      configMap.chat_model.set_chatee( sender_name );
+    if ( ! sender ){
+      writeAlert( msg_text );
+      return false;
     }
-    writeChat( sender_name, msg_text, is_user );
+
+    is_user = sender.is_user();
+
+    if ( ! ( is_user || sender_id === chatee.id ) ){
+      configMap.chat_model.set_chatee( sender_id );
+    }
+
+    writeChat( sender.name, msg_text, is_user );
+
+    if ( is_user ){
+      jqueryMap.$input.val( '' );
+      jqueryMap.$input.focus();
+    }
   };
 
   listChangeCb = function ( ){
@@ -344,12 +360,12 @@ spa.chat = (function () {
     people_db().each( function ( person, idx ){
       var select_class = '';
       if ( person.is_anon() || person.is_user() ){ return true;}
-      if ( chatee && chatee.cid === person.cid ){
+      if ( chatee && chatee.id === person.id ){
         select_class=' spa-x-select';
       }
       list_html
         += '<div class="spa-chat-list-name'
-        +  select_class + '" rel="' + person.cid + '">'
+        +  select_class + '" rel="' + person.id + '">'
         +  person.name + '</div>';
     });
 

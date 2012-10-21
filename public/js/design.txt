@@ -8,9 +8,9 @@ artifacts. A key aspect of the implementation should be that data and model
 layers should always be independent from the DOM.  Therefore, we will want
 to use callbacks:
 
-  spa.model.people.make_user( <name> );
+  spa.model.people.make_user( <user_name> );
   spa.model.chat.join();
-  spa.model.chat.set_chatee( 'fred' );
+  spa.model.chat.set_chatee( <chatee.id> );
 
   // set callbacks for various events
   spa.model.callBack.add( 'listchange', listChangeCb );
