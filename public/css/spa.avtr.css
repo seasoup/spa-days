@@ -1,0 +1,21 @@
+.spa-avtr-box {
+  position      : absolute;
+  margin-top    : -1em;
+  margin-left   : -1em;
+  width         : 2em;
+  height        : 2em;
+  border-radius : 0.4em;
+  border        : thin solid #444;
+  cursor        : move
+}
+
+.spa-avtr-box.spa-x-is-user {
+  border-color: #44f;
+}
+
+.spa-avtr-box.spa-x-is-chatee {
+  border-color: #080;
+}
+
+.spa-avtr-box.spa-x-drag {
+}

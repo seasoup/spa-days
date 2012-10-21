@@ -119,7 +119,7 @@ spa.model = (function (){
 
   people = ( function () {
     var
-      clear_db, get_cid_person, get_db, get_user, complete_signin,
+      clear_db, get_by_cid, get_db, get_user, complete_signin,
       make_person, make_user, remove_person, remove_user;
 
     clear_db = function (){
@@ -134,14 +134,16 @@ spa.model = (function (){
 
     complete_signin = function ( user_list ){
       var user_map = user_list[ 0 ];
+      console.warn(user_map);
       delete stateMap.people_cid_map[ user_map.cid ];
-      stateMap.user.cid = user_map._id;
-      stateMap.user.id  = user_map._id;
+      stateMap.user.cid     = user_map._id;
+      stateMap.user.id      = user_map._id;
+      stateMap.user.css_map = user_map.css_map;
       stateMap.people_cid_map[ user_map._id ] = stateMap.user;
       callBack.execute( 'login', stateMap.user );
     };
 
-    get_cid_person = function ( cid ){
+    get_by_cid = function ( cid ){
       return stateMap.people_cid_map[ cid ];
     };
 
@@ -212,7 +214,7 @@ spa.model = (function (){
 
     return {
       clear_db       : clear_db,
-      get_cid_person : get_cid_person,
+      get_by_cid     : get_by_cid,
       get_db         : get_db,
       get_user       : get_user,
       make_person    : make_person,
@@ -222,8 +224,7 @@ spa.model = (function (){
     };
   }());
 
-
-  chat = (function (){
+  chat = (function () {
     var
       chatee,
 
@@ -231,7 +232,7 @@ spa.model = (function (){
       execute_disconnect_cb,
 
       get_chatee, join_chat, leave_chat, send_msg,
-      set_chatee, update_list
+      set_chatee, update_avatar, update_list
       ;
 
     execute_listchange_cb = function ( arg_list ){
@@ -306,6 +307,13 @@ spa.model = (function (){
       return true;
     };
 
+    update_avatar = function ( arg_map ){
+      var sio = spa.data.getSio();
+      if ( sio ){
+        sio.emit( 'updateavtr', arg_map );
+      }
+    };
+
     update_list = function( arg_list ){
       var i, person_map, make_person_map,
         person_list      = arg_list[ 0 ],
@@ -345,12 +353,13 @@ spa.model = (function (){
     };
 
     return {
-      get_chatee  : get_chatee,
-      join        : join_chat,
-      leave       : leave_chat,
-      send_msg    : send_msg,
-      set_chatee  : set_chatee,
-      update_list : update_list
+      get_chatee    : get_chatee,
+      join          : join_chat,
+      leave         : leave_chat,
+      send_msg      : send_msg,
+      set_chatee    : set_chatee,
+      update_avatar : update_avatar,
+      update_list   : update_list
     };
   }());
 

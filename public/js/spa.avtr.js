@@ -1,6 +1,6 @@
 /*
 * spa.avtr.js
- * Avatar feature module for SPA
+ * Nav feature module for SPA
  *
  * Michael S. Mikowski - mike.mikowski@gmail.com
  * Copyright (c) 2011-2012 Manning Publications Co.
@@ -16,10 +16,10 @@
 /*global $, spa, getComputedStyle */
 
 spa.avtr = (function () {
+  "use strict";
   //---------------- BEGIN MODULE SCOPE VARIABLES --------------
   var
     configMap = {
-      block_html   : '<div class="spa-avtr-"></div>',
       avtr_model   : null,
       cb_model     : null,
       chat_model   : null,
@@ -34,25 +34,31 @@ spa.avtr = (function () {
     },
 
     stateMap  = {
-      $container : null,
-      px_per_em  : 0
+      drag_map     : null,
+      $drag_target : null,
+      px_per_em    : 0
     },
 
     jqueryMap = {},
 
-    setJqueryMap,     setPxSizes,     onClickAvatar,
-    onDragstartAvatar, onDragAvatar,  onDragendAvatar,
-    setChateeCb,      updateAvatarCb, listChangeCb,
+    getRandRgb,
+    setJqueryMap,     setPxSizes,
+    updateAvatar,
+    onClickNav,       onDragstartNav,
+    onDragNav,        onDragendNav,
+    setChateeCb,      listChangeCb,
     loginCb,          logoutCb,
     configModule,     initModule;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
   //------------------- BEGIN UTILITY METHODS ------------------
-  function getEmSize(el) {
-    return Number(getComputedStyle(el, '').fontSize.match(/(\d.+)px/)[1]);
-  }
-  //-------------------- END UTILITY METHODS -------------------
-
+  getRandRgb = function (){
+    var i, rgb_list = [];
+    for ( i = 0; i < 3; i++ ){
+      rgb_list.push( Math.floor( Math.random() * 256 ) );
+    }
+    return 'rgb(' + rgb_list.join(',') + ')';
+  };
   //--------------------- BEGIN DOM METHODS --------------------
   // Begin DOM method /setJqueryMap/
   setJqueryMap = function ( $container ) {
@@ -64,32 +70,71 @@ spa.avtr = (function () {
   setPxSizes = function ( $container ) {
     var px_per_em, window_height_em, opened_height;
 
-    px_per_em = getEmSize(jqueryMap.$container.get(0));
+    px_per_em = spa.util_b.getEmSize(jqueryMap.$container.get(0));
     stateMap.px_per_em = px_per_em;
   };
   // End DOM method /setPxSizes/
 
+  updateAvatar = function ( $target ){
+    var css_map, person_id;
+
+    css_map = {
+      top  : parseInt( $target.css( 'top' ), 10 ),
+      left : parseInt( $target.css( 'left' ), 10 ),
+      'background-color' : $target.css('background-color')
+    };
+    person_id = $target.attr( 'rel' );
+
+    configMap.chat_model.update_avatar({
+      person_id : person_id, css_map : css_map
+    });
+  };
   //---------------------- END DOM METHODS ---------------------
 
   //------------------- BEGIN EVENT HANDLERS -------------------
-  onDragstartAvatar = function ( event ){
-    return false;
+  onClickNav = function ( event ){
+    var  css_map, $target = $(event.target);
+    if ( ! $target.hasClass( 'spa-avtr-box') ){ return false; }
+    $target.css({ 'background-color' : getRandRgb() });
+    updateAvatar( $target );
   };
 
-  onDragAvatar = function ( event ){
-    return false;
+  onDragstartNav = function ( event, drag_event ){
+    var offset_target_map, offset_nav_map,
+      $target = $(event.target);
+
+    if ( ! $target.hasClass('spa-avtr-box') ){ return false; }
+
+    stateMap.$drag_target = $target;
+    offset_target_map = $target.offset();
+    offset_nav_map    = jqueryMap.$container.offset();
+
+    offset_target_map.top  -= offset_nav_map.top;
+    offset_target_map.left -= offset_nav_map.left;
+
+    stateMap.drag_map = offset_target_map;
   };
 
-  onDragendAvatar = function ( event ) {
-    configMap.avatar_model.sendCoord({ x: 25, y: 15 });
-    return false;
+  onDragNav = function ( event, drag_event ){
+    var drag_map = stateMap.drag_map;
+    stateMap.$drag_target.css({
+      top  : drag_map.top  + drag_event.deltaY,
+      left : drag_map.left + drag_event.deltaX
+    });
+  };
+
+  onDragendNav = function ( event, drag_event ) {
+    var $drag_target = stateMap.$drag_target;
+
+    updateAvatar( $drag_target );
+    stateMap.$drag_target = null;
+    stateMap.drag_map     = null;
   };
   //-------------------- END EVENT HANDLERS --------------------
 
   //--------------------- BEGIN CALLBACKS ----------------------
   setChateeCb = function ( arg_map ) {
-    var
-      new_chatee = arg_map.new_chatee,
+    var new_chatee = arg_map.new_chatee,
       old_chatee = arg_map.old_chatee;
 
     // Use this to highlight avatar of user in nav area
@@ -98,55 +143,76 @@ spa.avtr = (function () {
     // remove highlight from old_chatee avatar here
     if ( old_chatee ){
       jqueryMap.$container
-        .find('.spa-avtr-avatar')
-        .find('[rel=' + old_chatee.cid + ']')
-        .removeClass('spa-x-hilite');
+        .find( '.spa-avtr-avatar[rel=' + old_chatee.cid + ']' )
+        .removeClass( 'spa-x-is-chatee' );
     }
 
     // add highlight to new_chatee avatar here
     if ( new_chatee ){
       jqueryMap.$container
-        .find('.spa-avtr-avatar')
-        .find('[rel=' + new_chatee.cid + ']')
-        .removeClass('spa-x-hilite');
+        .find( '.spa-avtr-avatar[rel=' + new_chatee.cid + ']' )
+        .removeClass('spa-x-is-chatee');
     }
   };
 
-  // TODO use namespace '/avatar'
-  // Actions: updateavtr,
-  // { person_id : '...', person_name : '...', css_map : { top : 25, left : 0 } };
-  updateAvatarCb = function ( update_map ) {
-    var
-      person,
-      person_name = update_map.person_name,
-      person_id   = update_map.person_id,
-      coord_map   = update_map.coord_map,
-      user        = configMap.people_model.get_user(),
-      chatee      = configMap.chat_model.get_chatee() || {},
-      is_user     = false;
-
-    person = configMap.people_model.getById( person_id );
-
-    is_user = person_name === user.name;
-
-    if ( is_user ){ return false; }
-
-    jqueryMap.$container
-      .find('.spa-avtr-avatar')
-      .find('[rel=' + person.cid + ']')
-      .css( update_map.css_map )
-      ;
-
-  };
+//  // TODO use namespace '/avatar'
+//  // Actions: updateavtr,
+//  // { person_id : '...', css_map : { top : 25, left : 0 } };
+//  updateNavCb = function ( update_map ) {
+//    var
+//      person,
+//      person_name = update_map.person_name,
+//      person_id   = update_map.person_id,
+//      coord_map   = update_map.coord_map,
+//      user        = configMap.people_model.get_user(),
+//      chatee      = configMap.chat_model.get_chatee() || {},
+//      is_user     = false;
+//
+//    person = configMap.people_model.get_by_cid( person_id );
+//
+//    is_user = person_name === user.name;
+//
+//    if ( is_user ){ return false; }
+//
+//    jqueryMap.$container
+//      .find('.spa-avtr-avatar')
+//      .find('[rel=' + person.cid + ']')
+//      .css( update_map.css_map )
+//      ;
+//
+//  };
 
   listChangeCb = function (){
     var
       people_db = configMap.people_model.get_db(),
-      chatee    = configMap.chat_model.get_chatee();
+      chatee    = configMap.chat_model.get_chatee() || {},
+      $nav      = jqueryMap.$container,
+      $box
+      ;
 
-    //people_db().each( function (person, idx ){
+    $nav.empty();
+
+    people_db().each( function ( person, idx ){
+      var class_list;
+      if ( person.is_anon() ){ return true; }
+      class_list = [ 'spa-avtr-box' ];
+      if ( person.id === chatee.id ){
+        class_list.push( '');
+      }
+      if ( person.is_user() ){
+        class_list.push( 'spa-x-is-user');
+      }
+
+      $box = $('<div/>')
+        .addClass( class_list.join(' '))
+        .css( person.css_map )
+        .attr( 'rel', String(person.id) )
+        .prop( 'title', spa.util_b.encodeHtml( person.name ))
+        .appendTo( $nav )
+        ;
+    });
     //  // Only add or subtract avatars here; their position should be
-    //  // updated in the updateAvatarCb updated above
+    //  // updated in the updateNavCb updated above
     //  if ( person.is_anon() || person.is_user() ){ return true;}
     //  if ( chatee && chatee.cid === person.cid ){
     //    select_class=' spa-x-select';
@@ -159,9 +225,15 @@ spa.avtr = (function () {
   };
 
   loginCb  = function (){
-    // add my avatar
-    // draw avatars for all users?
+//    var user = configMap.people_model.get_user();
+//    if ( user.is_anon() ){ return false; }
+//    jqueryMap.$container.append( String()
+//      + '<div id="spa-avtr-' + user.id + '" '
+//        + 'class="spa-avtr-box">'
+//      + '</div>'
+//    );
   };
+
   logoutCb = function (){
     // remove my avatar
     // clear all avatars?
@@ -205,19 +277,16 @@ spa.avtr = (function () {
 
     // configure model callbacks
     configMap.cb_model.add( 'setchatee',  setChateeCb  );
-    // similar to 'updatechat'
-    configMap.cb_model.add( 'updateavtr', updateAvatarCb );
-    // similar to 'listchange'
     configMap.cb_model.add( 'listchange', listChangeCb );
     configMap.cb_model.add( 'login',      loginCb      );
     configMap.cb_model.add( 'logout',     logoutCb     );
 
     // bind actions
     jqueryMap.$container
-      .on( 'click',     '.spa-avtr-block', onClickAvatar )
-      .on( 'dragstart', '.spa-avtr-block', onDragstartAvatar )
-      .on( 'drag',      '.spa-avtr-block', onDragAvatar )
-      .on( 'dragend',   '.spa-avtr-block', onDragendAvatar )
+      .on( 'click',     '.spa-avtr-box', onClickNav )
+      .on( 'dragstart', onDragstartNav )
+      .on( 'drag',      onDragNav )
+      .on( 'dragend',   onDragendNav )
       ;
 
     return true;
@@ -226,8 +295,8 @@ spa.avtr = (function () {
 
   // return public methods
   return {
-    configModule      : configModule,
-    initModule        : initModule
+    configModule : configModule,
+    initModule   : initModule
   };
   //------------------- END PUBLIC METHODS ---------------------
 }());

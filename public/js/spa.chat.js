@@ -94,9 +94,6 @@ spa.chat = (function () {
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
   //------------------- BEGIN UTILITY METHODS ------------------
-  function getEmSize(el) {
-    return Number(getComputedStyle(el, '').fontSize.match(/(\d.+)px/)[1]);
-  }
   //-------------------- END UTILITY METHODS -------------------
 
   //--------------------- BEGIN DOM METHODS --------------------
@@ -128,7 +125,7 @@ spa.chat = (function () {
   setPxSizes = function () {
     var px_per_em, window_height_em, opened_height;
 
-    px_per_em = getEmSize(jqueryMap.$slider.get(0));
+    px_per_em = spa.util_b.getEmSize(jqueryMap.$slider.get(0));
     window_height_em = Math.floor(
       ( jqueryMap.$window.height() / px_per_em ) + 0.5
     );
@@ -236,17 +233,23 @@ spa.chat = (function () {
   };
 
   writeChat = function ( person_name, text, is_user ) {
-    var msg_class = is_user ? "spa-chat-msg-log-me" : "spa-chat-msg-log-msg";
+    var msg_class = is_user
+      ? 'spa-chat-msg-log-me' : 'spa-chat-msg-log-msg';
+
     jqueryMap.$msg_log.append(
       '<div class="' + msg_class + '">'
-      + person_name + ': ' + text + '</div>'
+      + spa.util_b.encodeHtml(person_name) + ': '
+      + spa.util_b.encodeHtml(text) + '</div>'
     );
+
     scrollChat();
   };
 
   writeAlert = function ( alert_text ) {
     jqueryMap.$msg_log.append(
-      '<div class="spa-chat-msg-log-alert">' + alert_text + '</div>'
+      '<div class="spa-chat-msg-log-alert">'
+        + spa.util_b.encodeHtml(alert_text)
+      + '</div>'
     );
     scrollChat();
   };
@@ -299,7 +302,10 @@ spa.chat = (function () {
     jqueryMap.$input.focus();
     if ( ! new_chatee ){
       if ( old_chatee ){
-        writeAlert( old_chatee.name + ' has left the chat' );
+        writeAlert(
+          spa.util_b.encodeHtml( old_chatee.name )
+          + ' has left the chat'
+        );
       }
       else {
         writeAlert( 'Your friend has left the chat' );
@@ -315,8 +321,12 @@ spa.chat = (function () {
       .find( '[rel=' + arg_map.new_chatee.id + ']' )
       .addClass( 'spa-x-select' );
 
-    writeAlert( 'Now chatting with ' + arg_map.new_chatee.name );
-    jqueryMap.$title.text( 'Chat with ' + arg_map.new_chatee.name );
+    writeAlert( 'Now chatting with '
+      + spa.util_b.encodeHtml( arg_map.new_chatee.name )
+    );
+    jqueryMap.$title.text( 'Chat with '
+      + spa.util_b.encodeHtml( arg_map.new_chatee.name )
+    );
     return true;
   };
 
@@ -329,7 +339,7 @@ spa.chat = (function () {
       sender_id = msg_map.sender_id,
       msg_text  = msg_map.msg_text,
       chatee    = configMap.chat_model.get_chatee() || {},
-      sender  = configMap.people_model.get_cid_person( sender_id )
+      sender  = configMap.people_model.get_by_cid( sender_id )
       ;
 
     if ( ! sender ){
@@ -366,7 +376,7 @@ spa.chat = (function () {
       list_html
         += '<div class="spa-chat-list-name'
         +  select_class + '" rel="' + person.id + '">'
-        +  person.name + '</div>';
+        +  spa.util_b.encodeHtml( person.name ) + '</div>';
     });
 
     if ( ! list_html ) {
@@ -392,38 +402,12 @@ spa.chat = (function () {
 
   //------------------- BEGIN PUBLIC METHODS -------------------
   // Begin public method /configModule/
-  //
   // Example  : spa.chat.configModule({...});
-  //
-  // Purpose  : Configure the module prior to initialization,
-  //   typically with values we do not expect to change during
-  //   a user session.
-  //
-  // Arguments:
-  //   * slider_* settings.  All these are are optional scalars.
-  //       See mapConfig.mapSettable for a full list.
-  //       Example: slider_open_em is the open height in em's.
-  //   * set_chat_anchor - A callback used by spa.chat to update
-  //       the URI anchor.  Must accept a single string argument
-  //       with the value 'opened' or 'closed', and return true
-  //       when able to update the URI anchor and false when unable.
-  //   * person_user - an object model for the browser user
-  //       Expected to provide the following:
-  //         ** getPersonName() - returns string
-  //         ** getPersonId()   - returns integer
-  //         ** isUser()        - boolean, true
-  //         ** isAnon()        - boolean, true if user anonymous
-  //   * chat_model - an object model for chat communication.
-  //       Expected to provide the following:
-  //         ** getPersonChat() - return person object of chat guest
-  //         ** sendMsg(string) - Send specified message
-  //
+  // Purpose  : Configure the module prior to initialization
   // Action   :
   //   The internal configuration data structure (configMap) is updated
   //   with provided arguments.  No other actions are taken.
-  //
   // Returns  : none
-  //
   // Throws   : JavaScript error object and stack trace on
   //            unacceptable or missing arguments
   //
@@ -438,24 +422,17 @@ spa.chat = (function () {
   // End public method /configModule/
 
   // Begin public method /initModule/
-  //
   // Example    : spa.chat.initModule( $( 'spa' ) );
-  //
-  // Purpose    :
-  //   Directs the module to begin offering its feature to the user.
-  //
+  // Purpose    : Initializes chat
   // Arguments  :
   //   * $append_target - the jquery DOM element where we
   //     will append the slider div
-  //
   // Action     :
   //   Appends a slider div to the provided container and fills
   //   it with the chat HTML content.  It then initializes elements,
   //   events, and handlers to provide the user with a chat-room
   //   interface.
-  //
-  // Returns    : true on success
-  //
+  // Returns    : none
   // Throws     : none
   //
   initModule = function ( $append_target ) {
@@ -483,9 +460,6 @@ spa.chat = (function () {
     jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);
     jqueryMap.$form.submit( onSubmitMsg );
     jqueryMap.$send.click(  onSubmitMsg );
-
-
-    return true;
   };
   // End public method /initModule/
 
