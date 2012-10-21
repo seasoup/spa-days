@@ -7,8 +7,8 @@
 
 /*global require, process, module, ObjectID */
 
-var chat        = require( 'chat' ),
-    crud        = require( 'crud' );
+var chat        = require( './lib/chat.js' ),
+    crud        = require( './lib/crud.js' );
 
 module.exports = function( app ) {
   var routes = {
