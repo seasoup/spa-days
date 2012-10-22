@@ -340,7 +340,7 @@ spa.chat = (function () {
       sender_id = msg_map.sender_id,
       msg_text  = msg_map.msg_text,
       chatee    = configMap.chat_model.get_chatee() || {},
-      sender  = configMap.people_model.get_by_cid( sender_id )
+      sender    = configMap.people_model.get_by_cid( sender_id )
       ;
 
     if ( ! sender ){

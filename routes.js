@@ -33,7 +33,7 @@ module.exports = function( app ) {
       });
 
       app.post( '/:object/create', function ( req, res ) {
-        crud.make( req.params.object, req.body, function ( result ) {
+        crud.construct( req.params.object, req.body, function ( result ) {
           res.send( result );
         });
       });

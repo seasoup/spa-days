@@ -74,9 +74,10 @@ spa.model = (function (){
 
     debug_cb_map = function (){ console.log( callback_map ); };
 
-    execute_cb = function ( cb_name, data ){
-    // We execute all the callbacks associated for the provided
+    // Execute all the callbacks associated for the provided
     // cb_name in order using data as the callback argument.
+    //
+    execute_cb = function ( cb_name, data ){
       var i, callback,
         callback_list = callback_map[ cb_name ];
 
@@ -309,7 +310,7 @@ spa.model = (function (){
     update_avatar = function ( arg_map ){
       var sio = spa.data.getSio();
       if ( sio ){
-        sio.emit( 'updateavtr', arg_map );
+        sio.emit( 'updateavatar', arg_map );
       }
     };
 
@@ -371,7 +372,6 @@ spa.model = (function (){
       logout     : [ chat.leave ],
       disconnect : [ chat.leave ],
       setchatee  : [],
-      updateavtr : [],
       updatechat : []
     });
     callBack.clear_map();
