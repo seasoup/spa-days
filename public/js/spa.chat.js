@@ -16,6 +16,7 @@
 /*global $, spa, getComputedStyle */
 
 spa.chat = (function () {
+  "use strict";
   //---------------- BEGIN MODULE SCOPE VARIABLES --------------
   var
     configMap = {

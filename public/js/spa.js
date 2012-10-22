@@ -16,16 +16,16 @@
 /*global $, spa */
 
 var spa = (function () {
+  "use strict";
   var initModule = function ( $container ){
-//    try {
+    try {
       spa.data.initModule();
       spa.model.initModule();
       spa.shell.initModule( $container );
-//  }
-//  catch ( error ) {
-//    console.trace('spa.js caught exception', error );
-//    throw error;
-//  }
+    }
+    catch ( error ) {
+      console.trace('spa.js caught exception', error );
+    }
   };
   return { initModule: initModule };
 }());

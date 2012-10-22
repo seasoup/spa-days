@@ -176,7 +176,7 @@ spa.model = (function (){
       var sio = spa.data.getSio();
       stateMap.user = make_person({
         cid     : makeCid(),
-        css_map : { top : 0, left : 0, 'background-color' : '#800' },
+        css_map : { top : 25, left : 25, 'background-color' : '#8f8' },
         name    : name
       });
       sio.emit( 'adduser', {

@@ -55,7 +55,7 @@ spa.avtr = (function () {
   getRandRgb = function (){
     var i, rgb_list = [];
     for ( i = 0; i < 3; i++ ){
-      rgb_list.push( Math.floor( Math.random() * 256 ) );
+      rgb_list.push( Math.floor( Math.random() * 128 ) + 128 );
     }
     return 'rgb(' + rgb_list.join(',') + ')';
   };
@@ -158,12 +158,15 @@ spa.avtr = (function () {
   listChangeCb = function (){
     var
       people_db = configMap.people_model.get_db(),
+      user      = configMap.people_model.get_user(),
       chatee    = configMap.chat_model.get_chatee() || {},
       $nav      = jqueryMap.$container,
       $box
       ;
 
     $nav.empty();
+    // if the user is logged out, do not render
+    if ( user.is_anon() ){ return false;}
 
     people_db().each( function ( person, idx ){
       var class_list;
@@ -171,7 +174,7 @@ spa.avtr = (function () {
       class_list = [ 'spa-avtr-box' ];
 
       if ( person.id === chatee.id ){
-        class_list.push( 'spa-avtr-is-chatee' );
+        class_list.push( 'spa-x-is-chatee' );
       }
       if ( person.is_user() ){
         class_list.push( 'spa-x-is-user');
@@ -180,22 +183,11 @@ spa.avtr = (function () {
       $box = $('<div/>')
         .addClass( class_list.join(' '))
         .css( person.css_map )
-        .attr( 'rel', String(person.id) )
+        .attr( 'rel', String( person.id ) )
         .prop( 'title', spa.util_b.encodeHtml( person.name ))
         .appendTo( $nav )
         ;
     });
-    //  // Only add or subtract avatars here; their position should be
-    //  // updated in the updateNavCb updated above
-    //  if ( person.is_anon() || person.is_user() ){ return true;}
-    //  if ( chatee && chatee.cid === person.cid ){
-    //    select_class=' spa-x-select';
-    //  }
-    //  list_html
-    //    += '<div class="spa-chat-list-name'
-    //    +  select_class + '" rel="' + person.cid + '">'
-    //    +  person.name + '</div>';
-    //});
   };
 
   loginCb  = function (){};

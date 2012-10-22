@@ -13,6 +13,7 @@
 /*global $, spa, io */
 
 spa.data = (function (){
+  "use strict";
   var
     stateMap = { sio : null },
     makeSio, getSio, clearSio, initModule

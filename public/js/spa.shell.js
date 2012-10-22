@@ -16,6 +16,7 @@
 /*global $, spa */
 
 spa.shell = (function () {
+  "use strict";
   //---------------- BEGIN MODULE SCOPE VARIABLES --------------
   var
     configMap = {

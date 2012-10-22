@@ -5,7 +5,7 @@
   width         : 2em;
   height        : 2em;
   border-radius : 0.4em;
-  border        : 2px solid #444;
+  border        : 2px solid #aaa;
   cursor        : move
 }
 
@@ -17,5 +17,3 @@
   border-color: #080;
 }
 
-.spa-avtr-box.spa-x-drag {
-}
