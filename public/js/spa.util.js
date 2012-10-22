@@ -20,7 +20,61 @@
 /*global $, spa */
 
 spa.util = (function () {
-  var makeError, setConfigMap;
+  var
+    checkMatchVal, removeListVal, pushUniqVal, makeListPlus,
+    makeError, setConfigMap;
+
+  // Begin utiltity /makeListPlus/
+  // Returns an array with much desired methods:
+  //   * remove_val(value) : remove element that matches
+  //     the provided value. Returns number of elements
+  //     removed.
+  //   * match_val(value)  : shows if a value exists
+  //   * push_uniq(value)  : pushes a value onto the stack
+  //     iff it does not already exist there
+  // Note: the reason I need this is to compare objects to
+  //   objects (perhaps jQuery has something similar?)
+  checkMatchVal = function ( data ){
+    var match_count = 0, idx;
+    for ( idx = this.length; idx; 0 ){
+      if ( this[--idx] === data ){ match_count++; }
+    }
+    return match_count;
+  };
+  removeListVal = function ( data ){
+    var removed_count = 0, idx;
+    for ( idx = this.length; idx; 0 ){
+      if ( this[--idx] === data ){
+        this.splice(idx, 1);
+        removed_count++;
+        idx++;
+      }
+    }
+    return removed_count;
+  };
+  pushUniqVal = function ( data ){
+    if ( checkMatchVal.call(this, data ) ){ return false; }
+    this.push( data );
+    return true;
+  };
+  // primary utility
+  makeListPlus = function ( input_list ){
+    if ( input_list && $.isArray(input_list) ){
+      if ( input_list.remove_val ){
+        console.warn('The array appears to already have listPlus capabilities');
+        return input_list;
+      }
+    }
+    else {
+      input_list = [];
+    }
+    input_list.remove_val = removeListVal;
+    input_list.match_val  = checkMatchVal;
+    input_list.push_uniq  = pushUniqVal;
+
+    return input_list;
+  };
+  // End utility /makeListPlus/
 
   // Begin Public constructor /makeError/
   // Purpose: a convenience wrapper to create an error object
@@ -77,6 +131,7 @@ spa.util = (function () {
 
   return {
     makeError    : makeError,
+    makeListPlus : makeListPlus,
     setConfigMap : setConfigMap
   };
 }());

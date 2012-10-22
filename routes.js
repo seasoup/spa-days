@@ -7,26 +7,27 @@
 
 /*global require, process, module, ObjectID */
 
-var chat        = require( './lib/chat.js' ),
-    crud        = require( './lib/crud.js' );
+var chat = require( './lib/chat.js' ),
+    crud = require( './lib/crud.js' );
 
 module.exports = function( app ) {
   var routes = {
     set: function () {
 
       app.all( '/:object/*?', function ( req, res, next ) {
-        var valid_object_type = ( !!crud.schema_map[ req.params.object ] );
-
+        var valid_object_type = ( !! crud.schema_map[ req.params.object ] );
         res.contentType( 'json' );
+
         if ( valid_object_type ) {
           next();
-        } else {
+        }
+        else {
           res.send( req.params.object + " is not a valid object type" );
         }
       });
 
       app.get( '/:object/list', function ( req, res ) {
-        crud.read( req.params.object, {}, function ( result ) {
+        crud.read( req.params.object, {}, {}, function ( result ) {
           res.send( result );
         });
       });
@@ -40,7 +41,7 @@ module.exports = function( app ) {
       app.get( '/:object/read/:id', function ( req, res ) {
         var find_map = { _id: ObjectID( req.params.id ) };
 
-        crud.read( req.params.object, find_map, function ( err, result ) {
+        crud.read( req.params.object, find_map, {}, function ( err, result ) {
           res.send( result );
         });
       });

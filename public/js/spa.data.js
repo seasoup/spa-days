@@ -13,6 +13,7 @@
 /*global $, spa, io */
 
 spa.data = (function (){
+  "use strict";
   var
     stateMap = { sio : null },
     makeSio, getSio, clearSio, initModule
@@ -23,11 +24,11 @@ spa.data = (function (){
 
     socket = io.connect( 'http://localhost:3000/chat' );
     return {
-      emit : function ( namespace, data ) {
-        socket.emit( namespace, data );
+      emit : function ( event, data ) {
+        socket.emit( event, data );
       },
-      on : function ( namespace, callback ) {
-        socket.on( namespace, function (){
+      on : function ( event, callback ) {
+        socket.on( event, function (){
           callback( arguments );
         });
       }
@@ -35,9 +36,7 @@ spa.data = (function (){
   };
 
   getSio = function (){
-    if ( ! stateMap.sio ) {
-      stateMap.sio = makeSio();
-    }
+    if ( ! stateMap.sio ) { stateMap.sio = makeSio(); }
     return stateMap.sio;
   };
 
@@ -57,15 +56,4 @@ spa.data = (function (){
     initModule : initModule
   };
 }());
-
-// Example create user crud call
-//   createUser = function ( name, callback ) {
-//     $.ajax({
-//       url  : '/users/create',
-//       type : 'post',
-//       data : { name : name },
-//       success : callback
-//     });
-//   };
-
 

@@ -16,6 +16,7 @@
 /*global $, spa */
 
 spa.shell = (function () {
+  "use strict";
   //---------------- BEGIN MODULE SCOPE VARIABLES --------------
   var
     configMap = {
@@ -66,7 +67,8 @@ spa.shell = (function () {
 
     jqueryMap = {
       $container : $container,
-      $acct      : $container.find('.spa-shell-head-acct')
+      $acct      : $container.find('.spa-shell-head-acct'),
+      $nav       : $container.find('.spa-shell-main-nav')
     };
   };
   // End DOM method /setJqueryMap/
@@ -285,6 +287,14 @@ spa.shell = (function () {
     });
     spa.chat.initModule( jqueryMap.$container );
 
+    // configure and initialize avatars
+    spa.avtr.configModule({
+      cb_model     : spa.model.callBack,
+      chat_model   : spa.model.chat,
+      people_model : spa.model.people
+    });
+    spa.avtr.initModule( jqueryMap.$nav );
+
     // Handle URI anchor change events.
     // This is done /after/ all feature modules are configured
     // and initialized, otherwise they will not be ready to handle
@@ -308,3 +318,4 @@ spa.shell = (function () {
   return { initModule : initModule };
   //------------------- END PUBLIC METHODS ---------------------
 }());
+

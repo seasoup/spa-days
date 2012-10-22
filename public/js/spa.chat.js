@@ -16,6 +16,7 @@
 /*global $, spa, getComputedStyle */
 
 spa.chat = (function () {
+  "use strict";
   //---------------- BEGIN MODULE SCOPE VARIABLES --------------
   var
     configMap = {
@@ -94,9 +95,6 @@ spa.chat = (function () {
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
   //------------------- BEGIN UTILITY METHODS ------------------
-  function getEmSize(el) {
-    return Number(getComputedStyle(el, '').fontSize.match(/(\d.+)px/)[1]);
-  }
   //-------------------- END UTILITY METHODS -------------------
 
   //--------------------- BEGIN DOM METHODS --------------------
@@ -128,7 +126,7 @@ spa.chat = (function () {
   setPxSizes = function () {
     var px_per_em, window_height_em, opened_height;
 
-    px_per_em = getEmSize(jqueryMap.$slider.get(0));
+    px_per_em = spa.util_b.getEmSize( jqueryMap.$slider.get(0) );
     window_height_em = Math.floor(
       ( jqueryMap.$window.height() / px_per_em ) + 0.5
     );
@@ -230,23 +228,29 @@ spa.chat = (function () {
   scrollChat = function() {
     var $msg_log = jqueryMap.$msg_log;
     $msg_log.animate(
-      { scrollTop : $msg_log.prop('scrollHeight') - $msg_log.height() },
+      { scrollTop : $msg_log.prop( 'scrollHeight' ) - $msg_log.height() },
       150
     );
   };
 
   writeChat = function ( person_name, text, is_user ) {
-    var msg_class = is_user ? "spa-chat-msg-log-me" : "spa-chat-msg-log-msg";
+    var msg_class = is_user
+      ? 'spa-chat-msg-log-me' : 'spa-chat-msg-log-msg';
+
     jqueryMap.$msg_log.append(
       '<div class="' + msg_class + '">'
-      + person_name + ': ' + text + '</div>'
+      + spa.util_b.encodeHtml(person_name) + ': '
+      + spa.util_b.encodeHtml(text) + '</div>'
     );
+
     scrollChat();
   };
 
   writeAlert = function ( alert_text ) {
     jqueryMap.$msg_log.append(
-      '<div class="spa-chat-msg-log-alert">' + alert_text + '</div>'
+      '<div class="spa-chat-msg-log-alert">'
+        + spa.util_b.encodeHtml(alert_text)
+      + '</div>'
     );
     scrollChat();
   };
@@ -273,17 +277,19 @@ spa.chat = (function () {
     if ( msg_text.trim() === '' ){ return false; }
     configMap.chat_model.send_msg( msg_text );
     jqueryMap.$input.focus();
-    jqueryMap.$send.addClass('spa-x-select');
+    jqueryMap.$send.addClass( 'spa-x-select' );
     setTimeout(
-      function (){ jqueryMap.$send.removeClass('spa-x-select'); },
+      function (){ jqueryMap.$send.removeClass( 'spa-x-select' ); },
       250
     );
     return false;
   };
 
   onClickChatee = function () {
-    var $this = $(this), chatee_name = $this.text();
-    configMap.chat_model.set_chatee( chatee_name );
+    var $clicked  = $(this),
+      chatee_id = $clicked.attr( 'rel' );
+
+    configMap.chat_model.set_chatee( chatee_id );
   };
   //-------------------- END EVENT HANDLERS --------------------
 
@@ -292,10 +298,14 @@ spa.chat = (function () {
     var
       new_chatee = arg_map.new_chatee,
       old_chatee = arg_map.old_chatee;
+
     jqueryMap.$input.focus();
     if ( ! new_chatee ){
       if ( old_chatee ){
-        writeAlert( old_chatee.name + ' has left the chat' );
+        writeAlert(
+          spa.util_b.encodeHtml( old_chatee.name )
+          + ' has left the chat'
+        );
       }
       else {
         writeAlert( 'Your friend has left the chat' );
@@ -305,34 +315,50 @@ spa.chat = (function () {
     }
 
     jqueryMap.$list_box
-      .find( '.spa-chat-list-name')
-      .removeClass('spa-x-select')
+      .find( '.spa-chat-list-name' )
+      .removeClass( 'spa-x-select' )
       .end()
-      .find('[rel=' + arg_map.new_chatee.cid + ']')
-      .addClass('spa-x-select');
+      .find( '[rel=' + arg_map.new_chatee.id + ']' )
+      .addClass( 'spa-x-select' );
 
-    writeAlert( 'Now chatting with ' + arg_map.new_chatee.name );
-    jqueryMap.$title.text( 'Chat with ' + arg_map.new_chatee.name );
+    writeAlert( 'Now chatting with '
+      + spa.util_b.encodeHtml( arg_map.new_chatee.name )
+    );
+    jqueryMap.$title.text( 'Chat with '
+      + spa.util_b.encodeHtml( arg_map.new_chatee.name )
+    );
     return true;
   };
 
-  updateChatCb = function ( data ){
+  updateChatCb = function ( arg_list ){
     var
-      sender_name = data [ 0 ],
-      msg_text    = data [ 1 ],
-      user        = configMap.people_model.get_user(),
-      chatee      = configMap.chat_model.get_chatee() || {},
-      is_user     = false;
+      is_user,
+      msg_map   = arg_list[ 0 ],
+      dest_id   = msg_map.dest_id,
+      dest_name = msg_map.dest_name,
+      sender_id = msg_map.sender_id,
+      msg_text  = msg_map.msg_text,
+      chatee    = configMap.chat_model.get_chatee() || {},
+      sender    = configMap.people_model.get_by_cid( sender_id )
+      ;
 
-    jqueryMap.$input.val( '' );
-    jqueryMap.$input.focus();
-
-    is_user = sender_name === user.name;
-
-    if ( ! ( is_user || sender_name === chatee.name ) ){
-      configMap.chat_model.set_chatee( sender_name );
+    if ( ! sender ){
+      writeAlert( msg_text );
+      return false;
     }
-    writeChat( sender_name, msg_text, is_user );
+
+    is_user = sender.is_user();
+
+    if ( ! ( is_user || sender_id === chatee.id ) ){
+      configMap.chat_model.set_chatee( sender_id );
+    }
+
+    writeChat( sender.name, msg_text, is_user );
+
+    if ( is_user ){
+      jqueryMap.$input.val( '' );
+      jqueryMap.$input.focus();
+    }
   };
 
   listChangeCb = function ( ){
@@ -344,13 +370,13 @@ spa.chat = (function () {
     people_db().each( function ( person, idx ){
       var select_class = '';
       if ( person.is_anon() || person.is_user() ){ return true;}
-      if ( chatee && chatee.cid === person.cid ){
+      if ( chatee && chatee.id === person.id ){
         select_class=' spa-x-select';
       }
       list_html
         += '<div class="spa-chat-list-name'
-        +  select_class + '" rel="' + person.cid + '">'
-        +  person.name + '</div>';
+        +  select_class + '" rel="' + person.id + '">'
+        +  spa.util_b.encodeHtml( person.name ) + '</div>';
     });
 
     if ( ! list_html ) {
@@ -363,48 +389,25 @@ spa.chat = (function () {
     jqueryMap.$list_box.html( list_html );
   };
 
-  loginCb  = function (){ };
+  loginCb  = function (){
+    configMap.set_chat_anchor( 'opened' );
+  };
+
   logoutCb = function (){
     configMap.set_chat_anchor( 'closed' );
-    jqueryMap.$title.text('Chat');
+    jqueryMap.$title.text( 'Chat' );
   };
 
   //---------------------- END CALLBACKS -----------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
   // Begin public method /configModule/
-  //
   // Example  : spa.chat.configModule({...});
-  //
-  // Purpose  : Configure the module prior to initialization,
-  //   typically with values we do not expect to change during
-  //   a user session.
-  //
-  // Arguments:
-  //   * slider_* settings.  All these are are optional scalars.
-  //       See mapConfig.mapSettable for a full list.
-  //       Example: slider_open_em is the open height in em's.
-  //   * set_chat_anchor - A callback used by spa.chat to update
-  //       the URI anchor.  Must accept a single string argument
-  //       with the value 'opened' or 'closed', and return true
-  //       when able to update the URI anchor and false when unable.
-  //   * person_user - an object model for the browser user
-  //       Expected to provide the following:
-  //         ** getPersonName() - returns string
-  //         ** getPersonId()   - returns integer
-  //         ** isUser()        - boolean, true
-  //         ** isAnon()        - boolean, true if user anonymous
-  //   * chat_model - an object model for chat communication.
-  //       Expected to provide the following:
-  //         ** getPersonChat() - return person object of chat guest
-  //         ** sendMsg(string) - Send specified message
-  //
+  // Purpose  : Configure the module prior to initialization
   // Action   :
   //   The internal configuration data structure (configMap) is updated
   //   with provided arguments.  No other actions are taken.
-  //
   // Returns  : none
-  //
   // Throws   : JavaScript error object and stack trace on
   //            unacceptable or missing arguments
   //
@@ -419,24 +422,17 @@ spa.chat = (function () {
   // End public method /configModule/
 
   // Begin public method /initModule/
-  //
-  // Example    : spa.chat.initModule( $('spa') );
-  //
-  // Purpose    :
-  //   Directs the module to begin offering its feature to the user.
-  //
+  // Example    : spa.chat.initModule( $( 'spa' ) );
+  // Purpose    : Initializes chat
   // Arguments  :
   //   * $append_target - the jquery DOM element where we
   //     will append the slider div
-  //
   // Action     :
   //   Appends a slider div to the provided container and fills
   //   it with the chat HTML content.  It then initializes elements,
   //   events, and handlers to provide the user with a chat-room
   //   interface.
-  //
-  // Returns    : true on success
-  //
+  // Returns    : none
   // Throws     : none
   //
   initModule = function ( $append_target ) {
@@ -464,9 +460,6 @@ spa.chat = (function () {
     jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);
     jqueryMap.$form.submit( onSubmitMsg );
     jqueryMap.$send.click(  onSubmitMsg );
-
-
-    return true;
   };
   // End public method /initModule/
 

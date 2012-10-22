@@ -16,6 +16,7 @@
 /*global $, spa */
 
 var spa = (function () {
+  "use strict";
   var initModule = function ( $container ){
     try {
       spa.data.initModule();
@@ -24,7 +25,6 @@ var spa = (function () {
     }
     catch ( error ) {
       console.trace('spa.js caught exception', error );
-      throw error;
     }
   };
   return { initModule: initModule };
