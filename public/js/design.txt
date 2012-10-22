@@ -5,7 +5,7 @@ FEATURE MODULE LEVEL
 We should prefer to use an abstracted inteface from the model,
 with perhaps the model maintaining and coordinating any global chat
 artifacts. A key aspect of the implementation should be that data and model
-layers should always be independent from the DOM.  Therefore, we will want
+layers should always be independent from the DOM.  Therefore, we want
 to use callbacks:
 
   spa.model.people.make_user( <user_name> );
@@ -21,35 +21,17 @@ to use callbacks:
 
   spa.model.chat.send_msg( ... );
 
-There is some question of the concept of chat rooms, which we can discuss.
-It may be that only a single chatroom is supported in our implementation.
-Will need to explore.
-
 NOTES FOR MODEL
 
 Global event have greatly improved over the last year in performance.  See
-http://stackoverflow.com/questions/3162748/jquery-global-events-and-performance.
-There is no good reason not to use them.
+http://stackoverflow.com/questions/3162748. However, we have instead implemented
+callbacks to remain independent of the DOM.  The downside of the callbacks is
+they don't magically "disappear" when a DOM element is removed.
 
-When message is received for a user, an 'updatechat' event is received by
-the by the sio object.  This contains the username and message text
-as arugments.
+An 'updatechat' message provides information to update the chat window.
 
-VARIOUS CLIENT CODE CONCEPTS
-
-  // for model: code to clean out output or input lists
-  var revised_list = [], $field;
-  FIELD:
-  for ( i = 0; i < field_$list.length; i++ ){
-    $field = field_$list[i];
-    if ( $field.closest('body') === 0 ){ continue FIELD; }
-    revise_list.push( $field );
-  }
-  // and revised_list now has all existant elements
-
-When user types in a message and presses return, we get an on-submit event and
+When user types in a message and presses return, we get a 'submit' event and
 we can send the message with spa.model.chat.send_msg(...);
-Use event.which for keyboard events, as it is the most robust.
 
 NOTES 2012-09-30 per Josh:
 
