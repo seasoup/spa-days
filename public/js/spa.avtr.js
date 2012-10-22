@@ -26,7 +26,6 @@ spa.avtr = (function () {
       people_model : null,
 
       settable_map : {
-        avtr_model   : true,
         cb_model     : true,
         chat_model   : true,
         people_model : true
@@ -42,7 +41,7 @@ spa.avtr = (function () {
     jqueryMap = {},
 
     getRandRgb,
-    setJqueryMap,     setPxSizes,
+    setJqueryMap,
     updateAvatar,
     onClickNav,       onDragstartNav,
     onDragNav,        onDragendNav,
@@ -65,15 +64,6 @@ spa.avtr = (function () {
     jqueryMap = { $container : $container };
   };
   // End DOM method /setJqueryMap/
-
-  // Begin DOM method /setPxSizes/
-  setPxSizes = function ( $container ) {
-    var px_per_em, window_height_em, opened_height;
-
-    px_per_em = spa.util_b.getEmSize(jqueryMap.$container.get(0));
-    stateMap.px_per_em = px_per_em;
-  };
-  // End DOM method /setPxSizes/
 
   updateAvatar = function ( $target ){
     var css_map, person_id;
@@ -235,7 +225,6 @@ spa.avtr = (function () {
   //
   initModule = function ( $container ) {
     setJqueryMap( $container );
-    setPxSizes( $container );
 
     // configure model callbacks
     configMap.cb_model.add( 'setchatee',  setChateeCb  );
