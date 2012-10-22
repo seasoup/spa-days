@@ -118,7 +118,7 @@ spa.model = (function (){
     };
   }());
 
-  people = ( function () {
+  people = (function () {
     var
       clear_db, get_by_cid, get_db, get_user, complete_signin,
       make_person, make_user, remove_person, remove_user;
@@ -164,10 +164,9 @@ spa.model = (function (){
       person.cid     = cid;
       person.name    = name;
       person.css_map = css_map;
+      if ( id ){ person.id = id; }
 
       stateMap.people_cid_map[ cid ] = person;
-
-      if ( id ){ person.id = id; }
 
       stateMap.people_db.insert( person );
       return person;
@@ -247,7 +246,7 @@ spa.model = (function (){
 
     get_chatee = function (){ return chatee; };
 
-    join_chat  = function ( ){
+    join_chat  = function () {
       var sio;
       if ( stateMap.user.is_anon() ){
         console.warn( 'User must be defined before joining chat');
@@ -269,7 +268,8 @@ spa.model = (function (){
     };
 
     send_msg = function ( msg_text ){
-      var msg_map, sio = spa.data.getSio();
+      var msg_map, 
+        sio = spa.data.getSio();
 
       if ( ! sio ){ return false; }
       if ( ! ( stateMap.user && chatee ) ){
@@ -367,10 +367,10 @@ spa.model = (function (){
 
   initModule = function (){
     callBack.set_baseline_map({
+      disconnect : [ chat.leave ],
       listchange : [ chat.update_list ],
       login      : [ chat.join ],
       logout     : [ chat.leave ],
-      disconnect : [ chat.leave ],
       setchatee  : [],
       updatechat : []
     });

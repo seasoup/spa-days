@@ -71,8 +71,9 @@
   bottom : 0;
 }
 .spa-shell-main-nav {
-  width  : 250px;
+  width      : 35em;
   background : #eee;
+  z-index    : 1;
 }
   .spa-x-closed .spa-shell-main-nav {
     width  : 0;
@@ -99,7 +100,7 @@
   left        : 50%;
   width       : 400px;
   height      : 400px;
-  background    : #fff;
+  background  : #fff;
+  z-index     : 2;
   border-radius : 3px;
-  z-index     : 1;
 }

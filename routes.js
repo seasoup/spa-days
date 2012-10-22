@@ -7,16 +7,15 @@
 
 /*global require, process, module, ObjectID */
 
-var chat        = require( './lib/chat.js' ),
-    crud        = require( './lib/crud.js' )
-    ;
+var chat = require( './lib/chat.js' ),
+    crud = require( './lib/crud.js' );
 
 module.exports = function( app ) {
   var routes = {
     set: function () {
 
       app.all( '/:object/*?', function ( req, res, next ) {
-        var valid_object_type = !!crud.schema_map[ req.params.object ];
+        var valid_object_type = ( !! crud.schema_map[ req.params.object ] );
 
         res.contentType( 'json' );
         if ( valid_object_type ) {
@@ -70,7 +69,7 @@ module.exports = function( app ) {
     }
   };
 
-  chat.connect( app, crud );
+  chat.connect( app );
 
   return routes;
 };

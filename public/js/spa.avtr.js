@@ -113,6 +113,8 @@ spa.avtr = (function () {
     offset_target_map.left -= offset_nav_map.left;
 
     stateMap.drag_map = offset_target_map;
+
+    $target.addClass('spa-x-is-drag');
   };
 
   onDragNav = function ( event, drag_event ){
@@ -129,6 +131,8 @@ spa.avtr = (function () {
     updateAvatar( $drag_target );
     stateMap.$drag_target = null;
     stateMap.drag_map     = null;
+
+    $drag_target.removeClass('spa-x-is-drag');
   };
   //-------------------- END EVENT HANDLERS --------------------
 
@@ -185,6 +189,7 @@ spa.avtr = (function () {
         .css( person.css_map )
         .attr( 'rel', String( person.id ) )
         .prop( 'title', spa.util_b.encodeHtml( person.name ))
+        .text( person.name )
         .appendTo( $nav )
         ;
     });

@@ -126,7 +126,7 @@ spa.chat = (function () {
   setPxSizes = function () {
     var px_per_em, window_height_em, opened_height;
 
-    px_per_em = spa.util_b.getEmSize(jqueryMap.$slider.get(0));
+    px_per_em = spa.util_b.getEmSize( jqueryMap.$slider.get(0) );
     window_height_em = Math.floor(
       ( jqueryMap.$window.height() / px_per_em ) + 0.5
     );
@@ -286,8 +286,7 @@ spa.chat = (function () {
   };
 
   onClickChatee = function () {
-    var
-      $clicked  = $(this),
+    var $clicked  = $(this),
       chatee_id = $clicked.attr( 'rel' );
 
     configMap.chat_model.set_chatee( chatee_id );

@@ -283,11 +283,11 @@ spa.shell = (function () {
       set_chat_anchor : setChatAnchor,
       cb_model        : spa.model.callBack,
       chat_model      : spa.model.chat,
-       people_model    : spa.model.people
+      people_model    : spa.model.people
     });
     spa.chat.initModule( jqueryMap.$container );
 
-    // configure and initialize blocks board
+    // configure and initialize avatars
     spa.avtr.configModule({
       cb_model     : spa.model.callBack,
       chat_model   : spa.model.chat,
