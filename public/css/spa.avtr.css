@@ -5,7 +5,7 @@
   width         : 2em;
   height        : 2em;
   border-radius : 0.4em;
-  border        : thin solid #444;
+  border        : 2px solid #444;
   cursor        : move
 }
 

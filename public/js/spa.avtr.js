@@ -143,44 +143,17 @@ spa.avtr = (function () {
     // remove highlight from old_chatee avatar here
     if ( old_chatee ){
       jqueryMap.$container
-        .find( '.spa-avtr-avatar[rel=' + old_chatee.cid + ']' )
+        .find( '.spa-avtr-box[rel=' + old_chatee.cid + ']' )
         .removeClass( 'spa-x-is-chatee' );
     }
 
     // add highlight to new_chatee avatar here
     if ( new_chatee ){
       jqueryMap.$container
-        .find( '.spa-avtr-avatar[rel=' + new_chatee.cid + ']' )
-        .removeClass('spa-x-is-chatee');
+        .find( '.spa-avtr-box[rel=' + new_chatee.cid + ']' )
+        .addClass('spa-x-is-chatee');
     }
   };
-
-//  // TODO use namespace '/avatar'
-//  // Actions: updateavtr,
-//  // { person_id : '...', css_map : { top : 25, left : 0 } };
-//  updateNavCb = function ( update_map ) {
-//    var
-//      person,
-//      person_name = update_map.person_name,
-//      person_id   = update_map.person_id,
-//      coord_map   = update_map.coord_map,
-//      user        = configMap.people_model.get_user(),
-//      chatee      = configMap.chat_model.get_chatee() || {},
-//      is_user     = false;
-//
-//    person = configMap.people_model.get_by_cid( person_id );
-//
-//    is_user = person_name === user.name;
-//
-//    if ( is_user ){ return false; }
-//
-//    jqueryMap.$container
-//      .find('.spa-avtr-avatar')
-//      .find('[rel=' + person.cid + ']')
-//      .css( update_map.css_map )
-//      ;
-//
-//  };
 
   listChangeCb = function (){
     var
@@ -196,8 +169,9 @@ spa.avtr = (function () {
       var class_list;
       if ( person.is_anon() ){ return true; }
       class_list = [ 'spa-avtr-box' ];
+
       if ( person.id === chatee.id ){
-        class_list.push( '');
+        class_list.push( 'spa-avtr-is-chatee' );
       }
       if ( person.is_user() ){
         class_list.push( 'spa-x-is-user');
@@ -224,19 +198,10 @@ spa.avtr = (function () {
     //});
   };
 
-  loginCb  = function (){
-//    var user = configMap.people_model.get_user();
-//    if ( user.is_anon() ){ return false; }
-//    jqueryMap.$container.append( String()
-//      + '<div id="spa-avtr-' + user.id + '" '
-//        + 'class="spa-avtr-box">'
-//      + '</div>'
-//    );
-  };
+  loginCb  = function (){};
 
   logoutCb = function (){
-    // remove my avatar
-    // clear all avatars?
+    jqueryMap.$container.empty();
   };
 
   //---------------------- END CALLBACKS -----------------------

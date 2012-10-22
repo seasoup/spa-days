@@ -134,7 +134,6 @@ spa.model = (function (){
 
     complete_signin = function ( user_list ){
       var user_map = user_list[ 0 ];
-      console.warn(user_map);
       delete stateMap.people_cid_map[ user_map.cid ];
       stateMap.user.cid     = user_map._id;
       stateMap.user.id      = user_map._id;
@@ -327,8 +326,9 @@ spa.model = (function (){
 
         if ( ! person_map.name ) { continue PERSON; }
 
-        // skip browser user
+        // skip browser user but update css_map
         if ( stateMap.user && stateMap.user.id === person_map._id ){
+          stateMap.user.css_map = person_map.css_map;
           continue PERSON;
         }
 
