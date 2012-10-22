@@ -1,6 +1,6 @@
 /*
 * spa.avtr.js
- * Nav feature module for SPA
+ * Avatar feature module for SPA
  *
  * Michael S. Mikowski - mike.mikowski@gmail.com
  * Copyright (c) 2011-2012 Manning Publications Co.
@@ -69,11 +69,11 @@ spa.avtr = (function () {
     var css_map, person_id;
 
     css_map = {
-      top  : parseInt( $target.css( 'top' ), 10 ),
+      top  : parseInt( $target.css( 'top'  ), 10 ),
       left : parseInt( $target.css( 'left' ), 10 ),
       'background-color' : $target.css('background-color')
     };
-    person_id = $target.attr( 'rel' );
+    person_id = $target.attr( 'data-id' );
 
     configMap.chat_model.update_avatar({
       person_id : person_id, css_map : css_map
@@ -137,14 +137,14 @@ spa.avtr = (function () {
     // remove highlight from old_chatee avatar here
     if ( old_chatee ){
       jqueryMap.$container
-        .find( '.spa-avtr-box[rel=' + old_chatee.cid + ']' )
+        .find( '.spa-avtr-box[data-id=' + old_chatee.cid + ']' )
         .removeClass( 'spa-x-is-chatee' );
     }
 
     // add highlight to new_chatee avatar here
     if ( new_chatee ){
       jqueryMap.$container
-        .find( '.spa-avtr-box[rel=' + new_chatee.cid + ']' )
+        .find( '.spa-avtr-box[data-id=' + new_chatee.cid + ']' )
         .addClass('spa-x-is-chatee');
     }
   };
@@ -177,7 +177,7 @@ spa.avtr = (function () {
       $box = $('<div/>')
         .addClass( class_list.join(' '))
         .css( person.css_map )
-        .attr( 'rel', String( person.id ) )
+        .attr( 'data-id', String( person.id ) )
         .prop( 'title', spa.util_b.encodeHtml( person.name ))
         .text( person.name )
         .appendTo( $nav )

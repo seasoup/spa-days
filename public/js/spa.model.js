@@ -38,7 +38,7 @@ spa.model = (function (){
   callBack = (function (){
     var
       add_cb, clear_cb_map, clear_cb_type, debug_cb_map,
-      execute_cb, set_baseline_cb_map, remove_cb,
+      trigger_cb, set_baseline_cb_map, remove_cb,
       baseline_cb_map = {}, callback_map = {};
 
 
@@ -77,7 +77,7 @@ spa.model = (function (){
     // Execute all the callbacks associated for the provided
     // cb_name in order using data as the callback argument.
     //
-    execute_cb = function ( cb_name, data ){
+    trigger_cb = function ( cb_name, data ){
       var i, callback,
         callback_list = callback_map[ cb_name ];
 
@@ -112,7 +112,7 @@ spa.model = (function (){
       clear_map        : clear_cb_map,
       clear_type       : clear_cb_type,
       debug_map        : debug_cb_map,
-      execute          : execute_cb,
+      trigger          : trigger_cb,
       set_baseline_map : set_baseline_cb_map,
       remove           : remove_cb
     };
@@ -140,7 +140,7 @@ spa.model = (function (){
       stateMap.user.id      = user_map._id;
       stateMap.user.css_map = user_map.css_map;
       stateMap.people_cid_map[ user_map._id ] = stateMap.user;
-      callBack.execute( 'login', stateMap.user );
+      callBack.trigger( 'login', stateMap.user );
     };
 
     get_by_cid = function ( cid ){
@@ -204,7 +204,7 @@ spa.model = (function (){
 
     remove_user = function (){
       var is_removed, user = stateMap.user;
-      callBack.execute( 'logout', user );
+      callBack.trigger( 'logout', user );
       is_removed = remove_person( user );
       if ( ! is_removed ){ return is_removed; }
       stateMap.user = stateMap.anon_user;
@@ -227,21 +227,21 @@ spa.model = (function (){
     var
       chatee,
 
-      execute_listchange_cb, execute_updatechat_cb,
-      execute_disconnect_cb,
+      trigger_listchange_cb, trigger_updatechat_cb,
+      trigger_disconnect_cb,
 
       get_chatee, join_chat, leave_chat, send_msg,
       set_chatee, update_avatar, update_list
       ;
 
-    execute_listchange_cb = function ( arg_list ){
-      callBack.execute( 'listchange', arg_list );
+    trigger_listchange_cb = function ( arg_list ){
+      callBack.trigger( 'listchange', arg_list );
     };
-    execute_updatechat_cb = function ( arg_list ){
-      callBack.execute( 'updatechat', arg_list );
+    trigger_updatechat_cb = function ( arg_list ){
+      callBack.trigger( 'updatechat', arg_list );
     };
-    execute_disconnect_cb =  function ( arg_list ){
-      callBack.execute( 'disconnect', arg_list );
+    trigger_disconnect_cb =  function ( arg_list ){
+      callBack.trigger( 'disconnect', arg_list );
     };
 
     get_chatee = function (){ return chatee; };
@@ -254,9 +254,9 @@ spa.model = (function (){
       }
 
       sio = spa.data.getSio();
-      sio.on( 'listchange', execute_listchange_cb );
-      sio.on( 'updatechat', execute_updatechat_cb );
-      sio.on( 'disconnect', execute_disconnect_cb );
+      sio.on( 'listchange', trigger_listchange_cb );
+      sio.on( 'updatechat', trigger_updatechat_cb );
+      sio.on( 'disconnect', trigger_disconnect_cb );
     };
 
     leave_chat = function (){
@@ -284,7 +284,7 @@ spa.model = (function (){
       };
 
       // the callback is triggered so we can show our outgoing messages
-      execute_updatechat_cb( [ msg_map] );
+      trigger_updatechat_cb( [ msg_map] );
       sio.emit( 'updatechat', msg_map );
     };
 
@@ -299,7 +299,7 @@ spa.model = (function (){
       else {
         new_chatee = null;
       }
-      callBack.execute(
+      callBack.trigger(
         'setchatee',
         { old_chatee : chatee, new_chatee : new_chatee }
       );

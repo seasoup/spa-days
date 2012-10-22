@@ -287,7 +287,7 @@ spa.chat = (function () {
 
   onClickChatee = function () {
     var $clicked  = $(this),
-      chatee_id = $clicked.attr( 'rel' );
+      chatee_id = $clicked.attr( 'data-id' );
 
     configMap.chat_model.set_chatee( chatee_id );
   };
@@ -302,10 +302,7 @@ spa.chat = (function () {
     jqueryMap.$input.focus();
     if ( ! new_chatee ){
       if ( old_chatee ){
-        writeAlert(
-          spa.util_b.encodeHtml( old_chatee.name )
-          + ' has left the chat'
-        );
+        writeAlert( old_chatee.name + ' has left the chat' );
       }
       else {
         writeAlert( 'Your friend has left the chat' );
@@ -318,15 +315,11 @@ spa.chat = (function () {
       .find( '.spa-chat-list-name' )
       .removeClass( 'spa-x-select' )
       .end()
-      .find( '[rel=' + arg_map.new_chatee.id + ']' )
+      .find( '[data-id=' + arg_map.new_chatee.id + ']' )
       .addClass( 'spa-x-select' );
 
-    writeAlert( 'Now chatting with '
-      + spa.util_b.encodeHtml( arg_map.new_chatee.name )
-    );
-    jqueryMap.$title.text( 'Chat with '
-      + spa.util_b.encodeHtml( arg_map.new_chatee.name )
-    );
+    writeAlert( 'Now chatting with ' + arg_map.new_chatee.name );
+    jqueryMap.$title.text( 'Chat with ' + arg_map.new_chatee.name );
     return true;
   };
 
@@ -375,7 +368,7 @@ spa.chat = (function () {
       }
       list_html
         += '<div class="spa-chat-list-name'
-        +  select_class + '" rel="' + person.id + '">'
+        +  select_class + '" data-id="' + person.id + '">'
         +  spa.util_b.encodeHtml( person.name ) + '</div>';
     });
 
@@ -385,6 +378,7 @@ spa.chat = (function () {
           + 'To chat alone is the fate of all great souls...<br><br>'
           + 'No one is online'
         + '</div>';
+        clearChat();
     }
     jqueryMap.$list_box.html( list_html );
   };
@@ -396,6 +390,7 @@ spa.chat = (function () {
   logoutCb = function (){
     configMap.set_chat_anchor( 'closed' );
     jqueryMap.$title.text( 'Chat' );
+    clearChat();
   };
 
   //---------------------- END CALLBACKS -----------------------
