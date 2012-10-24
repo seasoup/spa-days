@@ -163,23 +163,27 @@
 }
 
 .spa-chat-msg-in input[type=text] {
-  float      : left;
-  width      : 75%;
-  height     : 100%;
-  padding    : 0.5em;
-  border     : 0;
-  background : #ddd;
-  color      : #404040;
+  position    : absolute;
+  width       : 70%;
+  height      : 100%;
+  line-height : 100%;
+  padding     : 0 0.5em;
+  border      : 0;
+  background  : #ddd;
+  color       : #666;
 }
 
 .spa-chat-msg-in input[type=text]:focus {
-  background : #fff;
+  background : #ff8;
+  color      : #222;
 }
 
 .spa-chat-msg-send {
-  float       : left;
+  position    : absolute;
+  top         : 0;
+  right       : 0;
   width       : 25%;
-  height      : 2em;
+  height      : 100%;
   line-height : 1.9em;
   text-align  : center;
   color       : #fff;
@@ -190,7 +194,7 @@
 .spa-chat-msg-send:hover,
 .spa-chat-msg-send.spa-x-select {
   background : #444;
-  color            : #ff0;
+  color      : #ff0;
 }
 
 .spa-chat-head:hover .spa-chat-head-toggle {
