@@ -59,5 +59,3 @@ design.txt:
 README.txt
     => add this and point to public/js/spa.model.js for docs
 
-
-
