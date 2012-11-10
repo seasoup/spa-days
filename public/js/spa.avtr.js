@@ -45,7 +45,7 @@ spa.avtr = (function () {
     updateAvatar,
     onClickNav,       onDragstartNav,
     onDragNav,        onDragendNav,
-    setChateeCb,      listChangeCb,
+    onSetchatee,      onListchange,
     loginCb,          logoutCb,
     configModule,     initModule;
   //----------------- END MODULE SCOPE VARIABLES ---------------
@@ -127,34 +127,37 @@ spa.avtr = (function () {
   //-------------------- END EVENT HANDLERS --------------------
 
   //--------------------- BEGIN CALLBACKS ----------------------
-  setChateeCb = function ( arg_map ) {
-    var new_chatee = arg_map.new_chatee,
-      old_chatee = arg_map.old_chatee;
+  onSetchatee = function ( arg_map ) {
+    var
+      $nav       = $(this),
+      new_chatee = arg_map.new_chatee,
+      old_chatee = arg_map.old_chatee
+      ;
 
     // Use this to highlight avatar of user in nav area
     // See new_chatee.name, old_chatee.name, etc.
 
     // remove highlight from old_chatee avatar here
     if ( old_chatee ){
-      jqueryMap.$container
+      $nav
         .find( '.spa-avtr-box[data-id=' + old_chatee.cid + ']' )
         .removeClass( 'spa-x-is-chatee' );
     }
 
     // add highlight to new_chatee avatar here
     if ( new_chatee ){
-      jqueryMap.$container
+      $nav
         .find( '.spa-avtr-box[data-id=' + new_chatee.cid + ']' )
         .addClass('spa-x-is-chatee');
     }
   };
 
-  listChangeCb = function (){
+  onListchange = function (){
     var
       people_db = configMap.people_model.get_db(),
       user      = configMap.people_model.get_user(),
       chatee    = configMap.chat_model.get_chatee() || {},
-      $nav      = jqueryMap.$container,
+      $nav      = $(this), // jqueryMap.$container,
       $box
       ;
 
@@ -227,10 +230,14 @@ spa.avtr = (function () {
     setJqueryMap( $container );
 
     // configure model callbacks
-    configMap.cb_model.add( 'setchatee',  setChateeCb  );
-    configMap.cb_model.add( 'listchange', listChangeCb );
-    configMap.cb_model.add( 'login',      loginCb      );
-    configMap.cb_model.add( 'logout',     logoutCb     );
+    configMap.cb_model.add( 'login',  loginCb  );
+    configMap.cb_model.add( 'logout', logoutCb );
+
+    jqueryMap.$container
+      .bind( 'spa-setchatee',  onSetchatee )
+      .bind( 'spa-listchange', onListchange )
+      ;
+
 
     // bind actions
     jqueryMap.$container

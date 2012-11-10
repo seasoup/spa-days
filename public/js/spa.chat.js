@@ -87,7 +87,7 @@ spa.chat = (function () {
     writeChat,     writeAlert,   clearChat,
     setSliderPosition,
     onClickToggle, onSubmitMsg,  onClickChatee,
-    setChateeCb,   updateChatCb, listChangeCb,
+    onSetchatee,   updateChatCb, onListchange,
     loginCb,       logoutCb,
     configModule,  initModule,
     removeSlider,  handleResize
@@ -291,10 +291,8 @@ spa.chat = (function () {
 
     configMap.chat_model.set_chatee( chatee_id );
   };
-  //-------------------- END EVENT HANDLERS --------------------
 
-  //--------------------- BEGIN CALLBACKS ----------------------
-  setChateeCb = function ( arg_map ){
+  onSetchatee = function ( event, arg_map ){
     var
       new_chatee = arg_map.new_chatee,
       old_chatee = arg_map.old_chatee;
@@ -322,6 +320,40 @@ spa.chat = (function () {
     jqueryMap.$title.text( 'Chat with ' + arg_map.new_chatee.name );
     return true;
   };
+
+  onListchange = function ( event ){
+    var
+      list_html = String(),
+      people_db = configMap.people_model.get_db(),
+      chatee    = configMap.chat_model.get_chatee();
+
+
+    people_db().each( function ( person, idx ){
+      var select_class = '';
+      if ( person.is_anon() || person.is_user() ){ return true;}
+      if ( chatee && chatee.id === person.id ){
+        select_class=' spa-x-select';
+      }
+      list_html
+        += '<div class="spa-chat-list-name'
+        +  select_class + '" data-id="' + person.id + '">'
+        +  spa.util_b.encodeHtml( person.name ) + '</div>';
+    });
+
+    if ( ! list_html ) {
+      list_html = String()
+        + '<div class="spa-chat-list-note">'
+        + 'To chat alone is the fate of all great souls...<br><br>'
+        + 'No one is online'
+        + '</div>';
+      clearChat();
+    }
+    // jqueryMap.$list_box.html( list_html );
+    jqueryMap.$list_box.html( list_html );
+  };
+  //-------------------- END EVENT HANDLERS --------------------
+
+  //--------------------- BEGIN CALLBACKS ----------------------
 
   updateChatCb = function ( arg_list ){
     var
@@ -352,35 +384,6 @@ spa.chat = (function () {
       jqueryMap.$input.val( '' );
       jqueryMap.$input.focus();
     }
-  };
-
-  listChangeCb = function ( ){
-    var
-      list_html = String(),
-      people_db = configMap.people_model.get_db(),
-      chatee    = configMap.chat_model.get_chatee();
-
-    people_db().each( function ( person, idx ){
-      var select_class = '';
-      if ( person.is_anon() || person.is_user() ){ return true;}
-      if ( chatee && chatee.id === person.id ){
-        select_class=' spa-x-select';
-      }
-      list_html
-        += '<div class="spa-chat-list-name'
-        +  select_class + '" data-id="' + person.id + '">'
-        +  spa.util_b.encodeHtml( person.name ) + '</div>';
-    });
-
-    if ( ! list_html ) {
-      list_html = String()
-        + '<div class="spa-chat-list-note">'
-          + 'To chat alone is the fate of all great souls...<br><br>'
-          + 'No one is online'
-        + '</div>';
-        clearChat();
-    }
-    jqueryMap.$list_box.html( list_html );
   };
 
   loginCb  = function (){
@@ -445,11 +448,15 @@ spa.chat = (function () {
     stateMap.position_type = 'closed';
 
     // configure model callbacks
-    configMap.cb_model.add( 'setchatee',  setChateeCb  );
     configMap.cb_model.add( 'updatechat', updateChatCb );
-    configMap.cb_model.add( 'listchange', listChangeCb );
     configMap.cb_model.add( 'login',      loginCb      );
     configMap.cb_model.add( 'logout',     logoutCb     );
+
+    // bind model global events
+    jqueryMap.$list_box
+      .bind( 'spa-listchange', onListchange )
+      .bind( 'spa-setchatee', onSetchatee )
+      ;
 
     // bind actions
     jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);

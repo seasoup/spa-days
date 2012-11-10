@@ -234,86 +234,6 @@ spa.model = (function (){
       set_chatee, update_avatar, update_list
       ;
 
-    trigger_listchange_cb = function ( arg_list ){
-      callBack.trigger( 'listchange', arg_list );
-    };
-    trigger_updatechat_cb = function ( arg_list ){
-      callBack.trigger( 'updatechat', arg_list );
-    };
-    trigger_disconnect_cb =  function ( arg_list ){
-      callBack.trigger( 'disconnect', arg_list );
-    };
-
-    get_chatee = function (){ return chatee; };
-
-    join_chat  = function () {
-      var sio;
-      if ( stateMap.user.is_anon() ){
-        console.warn( 'User must be defined before joining chat');
-        return false;
-      }
-
-      sio = spa.data.getSio();
-      sio.on( 'listchange', trigger_listchange_cb );
-      sio.on( 'updatechat', trigger_updatechat_cb );
-      sio.on( 'disconnect', trigger_disconnect_cb );
-    };
-
-    leave_chat = function (){
-      var sio = spa.data.getSio();
-      if ( sio ){
-        sio.emit( 'leavechat' );
-      }
-      // spa.data.clearSio(); //?
-    };
-
-    send_msg = function ( msg_text ){
-      var msg_map, 
-        sio = spa.data.getSio();
-
-      if ( ! sio ){ return false; }
-      if ( ! ( stateMap.user && chatee ) ){
-        return false;
-      }
-
-      msg_map = {
-        dest_id   : chatee.id,
-        dest_name : chatee.name,
-        sender_id : stateMap.user.id,
-        msg_text  : msg_text
-      };
-
-      // the callback is triggered so we can show our outgoing messages
-      trigger_updatechat_cb( [ msg_map] );
-      sio.emit( 'updatechat', msg_map );
-    };
-
-    set_chatee = function ( chatee_id ){
-      var people_db, new_chatee;
-      new_chatee  = stateMap.people_cid_map[ chatee_id ];
-      if ( new_chatee ){
-        if ( chatee && chatee.id === new_chatee.id ){
-          return false;
-        }
-      }
-      else {
-        new_chatee = null;
-      }
-      callBack.trigger(
-        'setchatee',
-        { old_chatee : chatee, new_chatee : new_chatee }
-      );
-      chatee = new_chatee;
-      return true;
-    };
-
-    update_avatar = function ( arg_map ){
-      var sio = spa.data.getSio();
-      if ( sio ){
-        sio.emit( 'updateavatar', arg_map );
-      }
-    };
-
     update_list = function( arg_list ){
       var i, person_map, make_person_map,
         person_list      = arg_list[ 0 ],
@@ -349,8 +269,88 @@ spa.model = (function (){
       stateMap.people_db.sort( 'name' );
 
       // If chatee is no longer online, we unset the chatee
-      // which triggers the 'setchatee' callbacks
+      // which triggers the 'spa-setchatee' global event
       if ( chatee && ! is_chatee_online ){ set_chatee(''); }
+    };
+
+    trigger_listchange_cb = function ( arg_list ){
+      update_list( arg_list );
+      $.event.trigger( 'spa-listchange', arg_list );
+    };
+    trigger_updatechat_cb = function ( arg_list ){
+      callBack.trigger( 'updatechat', arg_list );
+    };
+    trigger_disconnect_cb =  function ( arg_list ){
+      callBack.trigger( 'disconnect', arg_list );
+    };
+
+    get_chatee = function (){ return chatee; };
+
+    join_chat  = function () {
+      var sio;
+      if ( stateMap.user.is_anon() ){
+        console.warn( 'User must be defined before joining chat');
+        return false;
+      }
+
+      sio = spa.data.getSio();
+      sio.on( 'listchange', trigger_listchange_cb );
+      sio.on( 'updatechat', trigger_updatechat_cb );
+      sio.on( 'disconnect', trigger_disconnect_cb );
+    };
+
+    leave_chat = function (){
+      var sio = spa.data.getSio();
+      if ( sio ){
+        sio.emit( 'leavechat' );
+      }
+      // spa.data.clearSio(); //?
+    };
+
+    send_msg = function ( msg_text ){
+      var msg_map,
+        sio = spa.data.getSio();
+
+      if ( ! sio ){ return false; }
+      if ( ! ( stateMap.user && chatee ) ){
+        return false;
+      }
+
+      msg_map = {
+        dest_id   : chatee.id,
+        dest_name : chatee.name,
+        sender_id : stateMap.user.id,
+        msg_text  : msg_text
+      };
+
+      // the callback is triggered so we can show our outgoing messages
+      trigger_updatechat_cb( [ msg_map] );
+      sio.emit( 'updatechat', msg_map );
+    };
+
+    set_chatee = function ( chatee_id ){
+      var new_chatee;
+      new_chatee  = stateMap.people_cid_map[ chatee_id ];
+      if ( new_chatee ){
+        if ( chatee && chatee.id === new_chatee.id ){
+          return false;
+        }
+      }
+      else {
+        new_chatee = null;
+      }
+      $.event.trigger( 'spa-setchatee',
+        { old_chatee : chatee, new_chatee : new_chatee }
+      );
+      chatee = new_chatee;
+      return true;
+    };
+
+    update_avatar = function ( arg_map ){
+      var sio = spa.data.getSio();
+      if ( sio ){
+        sio.emit( 'updateavatar', arg_map );
+      }
     };
 
     return {
@@ -368,10 +368,8 @@ spa.model = (function (){
   initModule = function (){
     callBack.set_baseline_map({
       disconnect : [ chat.leave ],
-      listchange : [ chat.update_list ],
       login      : [ chat.join ],
       logout     : [ chat.leave ],
-      setchatee  : [],
       updatechat : []
     });
     callBack.clear_map();
