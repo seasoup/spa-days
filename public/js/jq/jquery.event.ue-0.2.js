@@ -3,9 +3,10 @@
  *
  * jquery.event.ue-0.2.js
  * Unified Events for mouse and touch
+ * Requires jquery.event.mousewheel
  *
  * Michael S. Mikowski - mmikowski@snaplogic.com
- *
+ * MIT license
 */
 
 /*jslint           browser : true,   continue : true,
