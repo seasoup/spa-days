@@ -63,8 +63,8 @@ spa.chat = (function () {
       slider_close_time    : 250,
       slider_opened_em     : 18,
       slider_closed_em     : 2,
-      slider_opened_title  : 'Click to close',
-      slider_closed_title  : 'Click to open',
+      slider_opened_title  : 'Tap to close',
+      slider_closed_title  : 'Tap to open',
       slider_opened_min_em : 10,
       window_height_min_em : 20,
 
@@ -85,7 +85,7 @@ spa.chat = (function () {
     setJqueryMap,  setPxSizes,   scrollChat,
     writeChat,     writeAlert,   clearChat,
     setSliderPosition,
-    onClickToggle, onSubmitMsg,  onClickChatee,
+    onTapToggle,   onSubmitMsg,  onTapChatee,
     onSetchatee,   onUpdatechat, onListchange,
     onLogin,       onLogout,
     configModule,  initModule,
@@ -257,7 +257,7 @@ spa.chat = (function () {
   //---------------------- END DOM METHODS ---------------------
 
   //------------------- BEGIN EVENT HANDLERS -------------------
-  onClickToggle = function ( event ){
+  onTapToggle = function ( event ){
     var
       set_chat_anchor = configMap.set_chat_anchor;
     if ( stateMap.position_type === 'opened' ) {
@@ -282,11 +282,15 @@ spa.chat = (function () {
     return false;
   };
 
-  onClickChatee = function () {
-    var $clicked  = $(this),
-      chatee_id = $clicked.attr( 'data-id' );
+  onTapChatee = function ( event ) {
+    var $tapped  = $( event.elem_target ), chatee_id;
+    if ( ! $tapped.hasClass('spa-chat-list-name') ){ return false; };
+
+    chatee_id = $tapped.attr( 'data-id' );
+    if ( ! chatee_id ){ return false; }
 
     configMap.chat_model.set_chatee( chatee_id );
+    return false;
   };
 
   onSetchatee = function ( event, arg_map ){
@@ -434,10 +438,7 @@ spa.chat = (function () {
 
     // initialize chat slider to default title and state
     jqueryMap.$toggle.prop( 'title', configMap.slider_closed_title );
-    jqueryMap.$head.click( onClickToggle );
     stateMap.position_type = 'closed';
-
-    // configure model callbacks
 
     // bind model global events
     jqueryMap.$list_box
@@ -448,9 +449,10 @@ spa.chat = (function () {
       .bind( 'spa-logout',     onLogout     );
 
     // bind actions
-    jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);
+    jqueryMap.$head.bind( 'utap', onTapToggle );
+    jqueryMap.$list_box.bind( 'utap', onTapChatee);
+    jqueryMap.$send.bind( 'utap', onSubmitMsg );
     jqueryMap.$form.submit( onSubmitMsg );
-    jqueryMap.$send.click(  onSubmitMsg );
   };
   // End public method /initModule/
 

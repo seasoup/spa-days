@@ -33,6 +33,7 @@ spa.avtr = (function () {
     stateMap  = {
       drag_map     : null,
       $drag_target : null,
+      drag_bg_color: undefined,
       px_per_em    : 0
     },
 
@@ -41,8 +42,8 @@ spa.avtr = (function () {
     getRandRgb,
     setJqueryMap,
     updateAvatar,
-    onClickNav,       onDragstartNav,
-    onDragNav,        onDragendNav,
+    onTapNav,         onHeldstartNav,
+    onHeldmoveNav,    onHeldendNav,
     onSetchatee,      onListchange,
     onLogout,
     configModule,     initModule;
@@ -80,18 +81,18 @@ spa.avtr = (function () {
   //---------------------- END DOM METHODS ---------------------
 
   //------------------- BEGIN EVENT HANDLERS -------------------
-  onClickNav = function ( event ){
-    var  css_map, $target = $(event.target);
-    if ( ! $target.hasClass( 'spa-avtr-box') ){ return false; }
+  onTapNav = function ( event ){
+    var  css_map, $target = $( event.elem_target ).closest('.spa-avtr-box');
+    if ( $target.length === 0 ){ return false; }
     $target.css({ 'background-color' : getRandRgb() });
     updateAvatar( $target );
   };
 
-  onDragstartNav = function ( event, drag_event ){
+  onHeldstartNav = function ( event ){
     var offset_target_map, offset_nav_map,
-      $target = $(event.target);
+      $target = $( event.elem_target ).closest('.spa-avtr-box');
 
-    if ( ! $target.hasClass('spa-avtr-box') ){ return false; }
+    if ( $target.length === 0 ){ return false; };
 
     stateMap.$drag_target = $target;
     offset_target_map = $target.offset();
@@ -100,27 +101,37 @@ spa.avtr = (function () {
     offset_target_map.top  -= offset_nav_map.top;
     offset_target_map.left -= offset_nav_map.left;
 
-    stateMap.drag_map = offset_target_map;
+    stateMap.drag_map      = offset_target_map;
+    stateMap.drag_bg_color = $target.css('background-color');
 
-    $target.addClass('spa-x-is-drag');
+    $target
+      .addClass('spa-x-is-drag')
+      .css('background-color','');
   };
 
-  onDragNav = function ( event, drag_event ){
+  onHeldmoveNav = function ( event ){
     var drag_map = stateMap.drag_map;
-    stateMap.$drag_target.css({
-      top  : drag_map.top  + drag_event.deltaY,
-      left : drag_map.left + drag_event.deltaX
-    });
+    if ( ! drag_map ){ return false; }
+
+    drag_map.top  += event.px_delta_y;
+    drag_map.left += event.px_delta_x;
+
+    stateMap.$drag_target.css({ top  : drag_map.top, left : drag_map.left });
   };
 
-  onDragendNav = function ( event, drag_event ) {
+  onHeldendNav = function ( event ) {
     var $drag_target = stateMap.$drag_target;
+    if ( ! $drag_target ){ return false; }
 
-    updateAvatar( $drag_target );
+
+    $drag_target
+      .removeClass('spa-x-is-drag')
+      .css('background-color',stateMap.drag_bg_color);
+
+    stateMap.drag_bg_color= undefined;
     stateMap.$drag_target = null;
     stateMap.drag_map     = null;
-
-    $drag_target.removeClass('spa-x-is-drag');
+    updateAvatar( $drag_target );
   };
 
   onSetchatee = function ( event, arg_map ) {
@@ -149,10 +160,10 @@ spa.avtr = (function () {
 
   onListchange = function ( event ){
     var
+      $nav      = $(this),
       people_db = configMap.people_model.get_db(),
       user      = configMap.people_model.get_user(),
       chatee    = configMap.chat_model.get_chatee() || {},
-      $nav      = $(this), // jqueryMap.$container,
       $box;
 
     $nav.empty();
@@ -227,10 +238,10 @@ spa.avtr = (function () {
 
     // bind actions
     jqueryMap.$container
-      .on( 'click',     '.spa-avtr-box', onClickNav )
-      .on( 'dragstart', onDragstartNav )
-      .on( 'drag',      onDragNav )
-      .on( 'dragend',   onDragendNav );
+      .bind( 'utap',       onTapNav       )
+      .bind( 'uheldstart', onHeldstartNav )
+      .bind( 'uheldmove',  onHeldmoveNav  )
+      .bind( 'uheldend',   onHeldendNav   );
 
     return true;
   };

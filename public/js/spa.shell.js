@@ -47,7 +47,7 @@ spa.shell = (function () {
     jqueryMap = {},
 
     copyAnchorMap,    setJqueryMap,   changeAnchorPart,
-    onResize,         onHashchange,   onClickAcct,
+    onResize,         onHashchange,   onTapAcct,
     setChatAnchor,    onLogin,        onLogout,
     initModule
     ;
@@ -221,7 +221,7 @@ spa.shell = (function () {
   };
   // End Event handler /onResize/
 
-  onClickAcct = function ( event ){
+  onTapAcct = function ( event ){
     var acct_text, user_name, user = spa.model.people.get_user();
     if ( user.is_anon() ){
       user_name = prompt( "What's your name?" );
@@ -311,7 +311,7 @@ spa.shell = (function () {
 
     jqueryMap.$acct
       .text( 'Please sign-in')
-      .click( onClickAcct );
+      .bind( 'utap', onTapAcct );
 
   };
   // End PUBLIC method /initModule/

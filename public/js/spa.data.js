@@ -22,7 +22,9 @@ spa.data = (function (){
   makeSio = function (){
     var emit, on, socket;
 
-    socket = io.connect( 'http://localhost:3000/chat' );
+    // TODO: there must be a way to abstract this!
+    socket = io.connect( 'http://192.168.1.4:3000/chat' );
+    socket = io.connect( // 'http://localhost:3000/chat' );
     return {
       emit : function ( event, data ) {
         socket.emit( event, data );
