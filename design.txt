@@ -2,60 +2,42 @@ What we want:
 
 FEATURE MODULE LEVEL
 
-We should prefer to use an abstracted inteface from the model,
-with perhaps the model maintaining and coordinating any global chat
-artifacts. A key aspect of the implementation should be that data and model
-layers should always be independent from the DOM.  Therefore, we want
-to use callbacks:
+We should prefer to use an abstracted inteface from the model.
+We want the model to drive any changes on the DOM level, yet the model
+itself should not be tied to any DOM elements.
+
+Our model exports a people object and a chat object.  These are
+used by the feature modules to inform the model of changes, for example:
 
   spa.model.people.make_user( <user_name> );
   spa.model.chat.join();
   spa.model.chat.set_chatee( <chatee.id> );
-
-  // set callbacks for various events
-  spa.model.callBack.add( 'listchange', listChangeCb );
-  spa.model.callBack.add( 'chat',       chatCb );
-  spa.model.callBack.add( 'updatechat', updateChatCb );
-
-  // ... later ...
-
   spa.model.chat.send_msg( ... );
+
+Our data is bound using jQuery global events.  All our events
+are namespaced with an 'spa-' prefix.
+
+  jqueryMap.$list_box.bind( 'spa-listchange', onListchange );
+  jqueryMap.$chat_box.bind( 'spa-updatechat', onUpdatechat );
+
 
 NOTES FOR MODEL
 
-Global event have greatly improved over the last year in performance.  See
-http://stackoverflow.com/questions/3162748. However, we have instead implemented
-callbacks to remain independent of the DOM.  The downside of the callbacks is
-they don't magically "disappear" when a DOM element is removed.
+We originally implemented a callback stack to distribute event data to feature
+modules.  The benefit was we remained completely independent of the DOM and
+jQuery.  The downside was callbacks that were registered weren't tied to the DOM.
+Thus either callbacks had to be smart enough not to fire if their container
+was not on screen, or they had to be manually disassociated.  Ugh.
+
+So we went back to jQuery global events.  These have greatly improved in
+performance over the last few years
+(See http://stackoverflow.com/questions/3162748).
+
+The downside is the model now does require jQuery, and testing is more
+difficult.  We may bring back the callback stack for testing purposes.
 
 An 'updatechat' message provides information to update the chat window.
 
 When user types in a message and presses return, we get a 'submit' event and
 we can send the message with spa.model.chat.send_msg(...);
-
-NOTES 2012-09-30 per Josh:
-
-user comes to page:
- - gets name
- - client.emit( 'adduser', name );
-
-client emits 'listchange' to all connected clients
-  package: list of users in response_list[0][n].name
-
-User inputs a message.
-client emits a 'chat' with this argument:
- { user : name, message : msg_text, chatee : chatee.name };
-
-Server receives chat and looks up the chatter list
-server emits 'updatechat' to chatee only with originating username and
-message.
-
-If chatee is offline, Server emits back to originating client an 'updatechat'
-event with 'spa' as username, and message indicates it target chattee is
-offline.
-
-When client is closed, should emit a 'leavechat' event.  Server removes user
-and then emits a 'listchange' to all connected clients.
-package: list of users in response_list[0][n].name
-
 
