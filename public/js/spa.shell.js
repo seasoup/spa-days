@@ -48,7 +48,7 @@ spa.shell = (function () {
 
     copyAnchorMap,    setJqueryMap,   changeAnchorPart,
     onResize,         onHashchange,   onClickAcct,
-    setChatAnchor,    loginCb,        logoutCb,
+    setChatAnchor,    onLogin,        onLogout,
     initModule
     ;
   //----------------- END MODULE SCOPE VARIABLES ---------------
@@ -232,6 +232,14 @@ spa.shell = (function () {
     }
     return false;
   };
+
+  onLogin = function ( event, login_user ){
+    jqueryMap.$acct.text( login_user.name );
+  };
+
+  onLogout = function ( event, logout_user ){
+    jqueryMap.$acct.text( 'Please sign-in' );
+  };
   //-------------------- END EVENT HANDLERS --------------------
 
   //---------------------- BEGIN CALLBACKS ---------------------
@@ -256,13 +264,6 @@ spa.shell = (function () {
     return changeAnchorPart({ chat : position_type });
   };
   // End callback method /setChatAnchor/
-
-  loginCb = function ( login_user ){
-    jqueryMap.$acct.text( login_user.name );
-  };
-  logoutCb = function ( logout_user ){
-    jqueryMap.$acct.text( 'Please sign-in' );
-  };
   //----------------------- END CALLBACKS ----------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
@@ -281,7 +282,6 @@ spa.shell = (function () {
     // configure and initialize chat
     spa.chat.configModule({
       set_chat_anchor : setChatAnchor,
-      cb_model        : spa.model.callBack,
       chat_model      : spa.model.chat,
       people_model    : spa.model.people
     });
@@ -289,7 +289,6 @@ spa.shell = (function () {
 
     // configure and initialize avatars
     spa.avtr.configModule({
-      cb_model     : spa.model.callBack,
       chat_model   : spa.model.chat,
       people_model : spa.model.people
     });
@@ -306,12 +305,14 @@ spa.shell = (function () {
       .bind( 'hashchange',   onHashchange )
       .trigger( 'hashchange' );
 
+    $container
+      .bind( 'spa-login',  onLogin )
+      .bind( 'spa-logout', onLogout );
+
     jqueryMap.$acct
       .text( 'Please sign-in')
       .click( onClickAcct );
 
-    spa.model.callBack.add('login',  loginCb  );
-    spa.model.callBack.add('logout', logoutCb );
   };
   // End PUBLIC method /initModule/
 

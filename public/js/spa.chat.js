@@ -54,7 +54,6 @@ spa.chat = (function () {
         slider_opened_title : true,
         slider_closed_title : true,
 
-        cb_model        : true,
         chat_model      : true,
         people_model    : true,
         set_chat_anchor : true
@@ -87,11 +86,10 @@ spa.chat = (function () {
     writeChat,     writeAlert,   clearChat,
     setSliderPosition,
     onClickToggle, onSubmitMsg,  onClickChatee,
-    onSetchatee,   updateChatCb, onListchange,
-    loginCb,       logoutCb,
+    onSetchatee,   onUpdatechat, onListchange,
+    onLogin,       onLogout,
     configModule,  initModule,
-    removeSlider,  handleResize
-    ;
+    removeSlider,  handleResize;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
   //------------------- BEGIN UTILITY METHODS ------------------
@@ -102,8 +100,7 @@ spa.chat = (function () {
   setJqueryMap = function () {
     var
       $append_target = stateMap.$append_target,
-      $slider        = $append_target.find( '.spa-chat' )
-      ;
+      $slider        = $append_target.find( '.spa-chat' );
 
     jqueryMap = {
       $slider   : $slider,
@@ -351,21 +348,14 @@ spa.chat = (function () {
     // jqueryMap.$list_box.html( list_html );
     jqueryMap.$list_box.html( list_html );
   };
-  //-------------------- END EVENT HANDLERS --------------------
 
-  //--------------------- BEGIN CALLBACKS ----------------------
-
-  updateChatCb = function ( arg_list ){
+  onUpdatechat = function ( event, msg_map ){
     var
       is_user,
-      msg_map   = arg_list[ 0 ],
-      dest_id   = msg_map.dest_id,
-      dest_name = msg_map.dest_name,
       sender_id = msg_map.sender_id,
       msg_text  = msg_map.msg_text,
       chatee    = configMap.chat_model.get_chatee() || {},
-      sender    = configMap.people_model.get_by_cid( sender_id )
-      ;
+      sender    = configMap.people_model.get_by_cid( sender_id );
 
     if ( ! sender ){
       writeAlert( msg_text );
@@ -386,17 +376,17 @@ spa.chat = (function () {
     }
   };
 
-  loginCb  = function (){
+  onLogin  = function ( event, login_user ){
     configMap.set_chat_anchor( 'opened' );
   };
 
-  logoutCb = function (){
+  onLogout = function ( event, logout_user ){
     configMap.set_chat_anchor( 'closed' );
     jqueryMap.$title.text( 'Chat' );
     clearChat();
   };
 
-  //---------------------- END CALLBACKS -----------------------
+  //-------------------- END EVENT HANDLERS --------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
   // Begin public method /configModule/
@@ -448,15 +438,14 @@ spa.chat = (function () {
     stateMap.position_type = 'closed';
 
     // configure model callbacks
-    configMap.cb_model.add( 'updatechat', updateChatCb );
-    configMap.cb_model.add( 'login',      loginCb      );
-    configMap.cb_model.add( 'logout',     logoutCb     );
 
     // bind model global events
     jqueryMap.$list_box
       .bind( 'spa-listchange', onListchange )
-      .bind( 'spa-setchatee', onSetchatee )
-      ;
+      .bind( 'spa-setchatee',  onSetchatee  )
+      .bind( 'spa-updatechat', onUpdatechat )
+      .bind( 'spa-login',      onLogin      )
+      .bind( 'spa-logout',     onLogout     );
 
     // bind actions
     jqueryMap.$list_box.on( 'click', '.spa-chat-list-name', onClickChatee);

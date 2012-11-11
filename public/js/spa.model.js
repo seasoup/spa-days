@@ -24,9 +24,7 @@ spa.model = (function (){
       cid_serial     : 0
     },
 
-    personProto, makeCid, people, chat, callBack,
-    initModule
-    ;
+    personProto, makeCid, people, chat, initModule;
 
   personProto = {
     is_user : function (){ return this.cid === stateMap.user.cid; },
@@ -34,89 +32,6 @@ spa.model = (function (){
   };
 
   makeCid = function () { return 'c' + String(stateMap.cid_serial++); };
-
-  callBack = (function (){
-    var
-      add_cb, clear_cb_map, clear_cb_type, debug_cb_map,
-      trigger_cb, set_baseline_cb_map, remove_cb,
-      baseline_cb_map = {}, callback_map = {};
-
-
-    add_cb = function ( cb_name, callback ){
-      var i, callback_list = callback_map [ cb_name ];
-      if ( ! callback_list ){ throw 'invalid cb_name:' + cb_name; }
-
-      for ( i = 0; i < callback_list.length; i++ ){
-        if ( callback_list[i] === callback ){
-          return false;
-        }
-      }
-      callback_list.push( callback );
-      return true;
-    };
-
-    clear_cb_map = function (){
-      callback_map = {};
-      var cb_name;
-      for ( cb_name in baseline_cb_map ){
-        if ( baseline_cb_map.hasOwnProperty( cb_name ) ){
-          callback_map[ cb_name ]
-            = baseline_cb_map[ cb_name ].slice( 0 );
-        }
-      }
-    };
-
-    clear_cb_type = function ( cb_name ){
-      var callback_list = callback_map[ cb_name ];
-      if ( ! callback_list ){ throw 'invalid cb_name: ' + cb_name; }
-      callback_map[ cb_name ] = baseline_cb_map[ cb_name ].slice( 0 );
-    };
-
-    debug_cb_map = function (){ console.log( callback_map ); };
-
-    // Execute all the callbacks associated for the provided
-    // cb_name in order using data as the callback argument.
-    //
-    trigger_cb = function ( cb_name, data ){
-      var i, callback,
-        callback_list = callback_map[ cb_name ];
-
-      if ( ! callback_list ){ throw 'invalid cb_name: ' + cb_name; }
-
-      for ( i = 0; i < callback_list.length; i++ ){
-        callback = callback_list[ i ];
-        callback( data );
-      }
-    };
-
-    set_baseline_cb_map = function ( baseline_map ){
-      baseline_cb_map = baseline_map;
-    };
-
-    remove_cb = function ( cb_name, callback ){
-      var i, new_list = [],
-        callback_list = callback_map [ cb_name ];
-
-      if ( ! callback_list ){ throw 'invalid cb_name: ' + cb_name; }
-
-      for ( i = 0; i < callback_list.length; i++ ){
-        if ( callback_list[i] === callback ){ continue; }
-        new_list.push( callback_list[ i ] );
-      }
-      callback_map[ cb_name ] = new_list;
-      return true;
-    };
-
-    return {
-      add              : add_cb,
-      clear_map        : clear_cb_map,
-      clear_type       : clear_cb_type,
-      debug_map        : debug_cb_map,
-      trigger          : trigger_cb,
-      set_baseline_map : set_baseline_cb_map,
-      remove           : remove_cb
-    };
-  }());
 
   people = (function () {
     var
@@ -140,7 +55,8 @@ spa.model = (function (){
       stateMap.user.id      = user_map._id;
       stateMap.user.css_map = user_map.css_map;
       stateMap.people_cid_map[ user_map._id ] = stateMap.user;
-      callBack.trigger( 'login', stateMap.user );
+      chat.join();
+      $.event.trigger( 'spa-login', [ stateMap.user ] );
     };
 
     get_by_cid = function ( cid ){
@@ -204,11 +120,14 @@ spa.model = (function (){
 
     remove_user = function (){
       var is_removed, user = stateMap.user;
-      callBack.trigger( 'logout', user );
+
+      $.event.trigger( 'spa-logout', [ user ] );
+      chat.leave();
+
       is_removed = remove_person( user );
-      if ( ! is_removed ){ return is_removed; }
       stateMap.user = stateMap.anon_user;
-      return true;
+
+      return is_removed;
     };
 
     return {
@@ -227,12 +146,11 @@ spa.model = (function (){
     var
       chatee,
 
-      trigger_listchange_cb, trigger_updatechat_cb,
-      trigger_disconnect_cb,
+      trigger_listchange, trigger_updatechat,
+      trigger_disconnect,
 
       get_chatee, join_chat, leave_chat, send_msg,
-      set_chatee, update_avatar, update_list
-      ;
+      set_chatee, update_avatar, update_list;
 
     update_list = function( arg_list ){
       var i, person_map, make_person_map,
@@ -247,7 +165,7 @@ spa.model = (function (){
 
         if ( ! person_map.name ) { continue PERSON; }
 
-        // skip browser user but update css_map
+        // if user, update css_map and skip remainder
         if ( stateMap.user && stateMap.user.id === person_map._id ){
           stateMap.user.css_map = person_map.css_map;
           continue PERSON;
@@ -273,38 +191,13 @@ spa.model = (function (){
       if ( chatee && ! is_chatee_online ){ set_chatee(''); }
     };
 
-    trigger_listchange_cb = function ( arg_list ){
-      update_list( arg_list );
-      $.event.trigger( 'spa-listchange', arg_list );
-    };
-    trigger_updatechat_cb = function ( arg_list ){
-      callBack.trigger( 'updatechat', arg_list );
-    };
-    trigger_disconnect_cb =  function ( arg_list ){
-      callBack.trigger( 'disconnect', arg_list );
-    };
-
     get_chatee = function (){ return chatee; };
-
-    join_chat  = function () {
-      var sio;
-      if ( stateMap.user.is_anon() ){
-        console.warn( 'User must be defined before joining chat');
-        return false;
-      }
-
-      sio = spa.data.getSio();
-      sio.on( 'listchange', trigger_listchange_cb );
-      sio.on( 'updatechat', trigger_updatechat_cb );
-      sio.on( 'disconnect', trigger_disconnect_cb );
-    };
 
     leave_chat = function (){
       var sio = spa.data.getSio();
       if ( sio ){
         sio.emit( 'leavechat' );
       }
-      // spa.data.clearSio(); //?
     };
 
     send_msg = function ( msg_text ){
@@ -323,8 +216,8 @@ spa.model = (function (){
         msg_text  : msg_text
       };
 
-      // the callback is triggered so we can show our outgoing messages
-      trigger_updatechat_cb( [ msg_map] );
+      // we triggered updatechat so we can show our outgoing messages
+      trigger_updatechat( [ msg_map ] );
       sio.emit( 'updatechat', msg_map );
     };
 
@@ -353,6 +246,32 @@ spa.model = (function (){
       }
     };
 
+    trigger_listchange = function ( arg_list ){
+      update_list( arg_list );
+      $.event.trigger( 'spa-listchange', [ arg_list ] );
+    };
+    trigger_updatechat = function ( arg_list ){
+      var msg_map = arg_list[ 0 ];
+      $.event.trigger( 'spa-updatechat', [ msg_map ] );
+    };
+    trigger_disconnect =  function ( arg_list ){
+      leave_chat();
+      $.event.trigger( 'spa-disconnect', [ arg_list ] );
+    };
+
+    join_chat  = function () {
+      var sio;
+      if ( stateMap.user.is_anon() ){
+        console.warn( 'User must be defined before joining chat');
+        return false;
+      }
+
+      sio = spa.data.getSio();
+      sio.on( 'listchange', trigger_listchange );
+      sio.on( 'updatechat', trigger_updatechat );
+      sio.on( 'disconnect', trigger_disconnect );
+    };
+
     return {
       get_chatee    : get_chatee,
       join          : join_chat,
@@ -366,14 +285,6 @@ spa.model = (function (){
 
 
   initModule = function (){
-    callBack.set_baseline_map({
-      disconnect : [ chat.leave ],
-      login      : [ chat.join ],
-      logout     : [ chat.leave ],
-      updatechat : []
-    });
-    callBack.clear_map();
-
     stateMap.anon_user = people.make_person({
       name  : 'anonymous',
       cid   : makeCid(),
@@ -384,7 +295,6 @@ spa.model = (function (){
 
   return {
     initModule : initModule,
-    callBack   : callBack,
     chat       : chat,
     people     : people
   };

@@ -21,12 +21,10 @@ spa.avtr = (function () {
   var
     configMap = {
       avtr_model   : null,
-      cb_model     : null,
       chat_model   : null,
       people_model : null,
 
       settable_map : {
-        cb_model     : true,
         chat_model   : true,
         people_model : true
       }
@@ -46,7 +44,7 @@ spa.avtr = (function () {
     onClickNav,       onDragstartNav,
     onDragNav,        onDragendNav,
     onSetchatee,      onListchange,
-    loginCb,          logoutCb,
+    onLogout,
     configModule,     initModule;
   //----------------- END MODULE SCOPE VARIABLES ---------------
 
@@ -124,15 +122,12 @@ spa.avtr = (function () {
 
     $drag_target.removeClass('spa-x-is-drag');
   };
-  //-------------------- END EVENT HANDLERS --------------------
 
-  //--------------------- BEGIN CALLBACKS ----------------------
-  onSetchatee = function ( arg_map ) {
+  onSetchatee = function ( event, arg_map ) {
     var
       $nav       = $(this),
       new_chatee = arg_map.new_chatee,
-      old_chatee = arg_map.old_chatee
-      ;
+      old_chatee = arg_map.old_chatee;
 
     // Use this to highlight avatar of user in nav area
     // See new_chatee.name, old_chatee.name, etc.
@@ -152,14 +147,13 @@ spa.avtr = (function () {
     }
   };
 
-  onListchange = function (){
+  onListchange = function ( event ){
     var
       people_db = configMap.people_model.get_db(),
       user      = configMap.people_model.get_user(),
       chatee    = configMap.chat_model.get_chatee() || {},
       $nav      = $(this), // jqueryMap.$container,
-      $box
-      ;
+      $box;
 
     $nav.empty();
     // if the user is logged out, do not render
@@ -183,18 +177,14 @@ spa.avtr = (function () {
         .attr( 'data-id', String( person.id ) )
         .prop( 'title', spa.util_b.encodeHtml( person.name ))
         .text( person.name )
-        .appendTo( $nav )
-        ;
+        .appendTo( $nav );
     });
   };
 
-  loginCb  = function (){};
-
-  logoutCb = function (){
+  onLogout = function (){
     jqueryMap.$container.empty();
   };
-
-  //---------------------- END CALLBACKS -----------------------
+  //-------------------- END EVENT HANDLERS --------------------
 
   //------------------- BEGIN PUBLIC METHODS -------------------
   // Begin public method /configModule/
@@ -229,23 +219,18 @@ spa.avtr = (function () {
   initModule = function ( $container ) {
     setJqueryMap( $container );
 
-    // configure model callbacks
-    configMap.cb_model.add( 'login',  loginCb  );
-    configMap.cb_model.add( 'logout', logoutCb );
-
+    // bind model global events
     jqueryMap.$container
-      .bind( 'spa-setchatee',  onSetchatee )
+      .bind( 'spa-setchatee',  onSetchatee  )
       .bind( 'spa-listchange', onListchange )
-      ;
-
+      .bind( 'spa-logout',     onLogout     );
 
     // bind actions
     jqueryMap.$container
       .on( 'click',     '.spa-avtr-box', onClickNav )
       .on( 'dragstart', onDragstartNav )
       .on( 'drag',      onDragNav )
-      .on( 'dragend',   onDragendNav )
-      ;
+      .on( 'dragend',   onDragendNav );
 
     return true;
   };
