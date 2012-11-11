@@ -31,12 +31,12 @@ spa.model = (function (){
     is_anon : function (){ return this.cid === stateMap.anon_user.cid; }
   };
 
-  makeCid = function () { return 'c' + String(stateMap.cid_serial++); };
+  makeCid = function () { return 'c' + String( stateMap.cid_serial++ ); };
 
   people = (function () {
     var
-      clear_db, get_by_cid, get_db, get_user, complete_signin,
-      make_person, make_user, remove_person, remove_user;
+      clear_db, get_by_cid, get_db, get_user, complete_login,
+      make_person, login, remove_person, logout;
 
     clear_db = function (){
       var user = stateMap.user;
@@ -48,7 +48,7 @@ spa.model = (function (){
       }
     };
 
-    complete_signin = function ( user_list ){
+    complete_login = function ( user_list ){
       var user_map = user_list[ 0 ];
       delete stateMap.people_cid_map[ user_map.cid ];
       stateMap.user.cid     = user_map._id;
@@ -88,7 +88,7 @@ spa.model = (function (){
       return person;
     };
 
-    make_user = function ( name ){
+    login = function ( name ){
       var sio = spa.data.getSio();
       stateMap.user = make_person({
         cid     : makeCid(),
@@ -100,7 +100,7 @@ spa.model = (function (){
         css_map : stateMap.user.css_map,
         name    : stateMap.user.name
       });
-      sio.on( 'userupdate', complete_signin );
+      sio.on( 'userupdate', complete_login );
     };
 
     remove_person = function ( person ){
@@ -118,15 +118,15 @@ spa.model = (function (){
       return true;
     };
 
-    remove_user = function (){
+    logout = function (){
       var is_removed, user = stateMap.user;
+      chat._leave();
 
-      $.event.trigger( 'spa-logout', [ user ] );
-      chat.leave();
-
-      is_removed = remove_person( user );
+      is_removed    = remove_person( user );
       stateMap.user = stateMap.anon_user;
 
+      $.event.trigger( 'spa-logout', [ user ] );
+      spa.data.clearSio();
       return is_removed;
     };
 
@@ -136,9 +136,9 @@ spa.model = (function (){
       get_db         : get_db,
       get_user       : get_user,
       make_person    : make_person,
-      make_user      : make_user,
       remove_person  : remove_person,
-      remove_user    : remove_user
+      login          : login,
+      logout         : logout
     };
   }());
 
@@ -149,7 +149,7 @@ spa.model = (function (){
       trigger_listchange, trigger_updatechat,
       trigger_disconnect,
 
-      get_chatee, join_chat, leave_chat, send_msg,
+      get_chatee, join_chat, _leave_chat, send_msg,
       set_chatee, update_avatar, update_list;
 
     update_list = function( arg_list ){
@@ -193,7 +193,7 @@ spa.model = (function (){
 
     get_chatee = function (){ return chatee; };
 
-    leave_chat = function (){
+    _leave_chat = function (){
       var sio = spa.data.getSio();
       if ( sio ){
         sio.emit( 'leavechat' );
@@ -250,14 +250,15 @@ spa.model = (function (){
       update_list( arg_list );
       $.event.trigger( 'spa-listchange', [ arg_list ] );
     };
+
     trigger_updatechat = function ( arg_list ){
       var msg_map = arg_list[ 0 ];
       $.event.trigger( 'spa-updatechat', [ msg_map ] );
     };
-    trigger_disconnect =  function ( arg_list ){
-      leave_chat();
-      $.event.trigger( 'spa-disconnect', [ arg_list ] );
-    };
+
+//    trigger_disconnect = function ( arg_list ){
+//      spa.data.clearSio();
+//    };
 
     join_chat  = function () {
       var sio;
@@ -269,13 +270,13 @@ spa.model = (function (){
       sio = spa.data.getSio();
       sio.on( 'listchange', trigger_listchange );
       sio.on( 'updatechat', trigger_updatechat );
-      sio.on( 'disconnect', trigger_disconnect );
+//      sio.on( 'disconnect', trigger_disconnect );
     };
 
     return {
       get_chatee    : get_chatee,
       join          : join_chat,
-      leave         : leave_chat,
+      _leave        : _leave_chat,
       send_msg      : send_msg,
       set_chatee    : set_chatee,
       update_avatar : update_avatar,

@@ -20,14 +20,16 @@ spa.data = (function (){
     ;
 
   makeSio = function (){
-    var emit, on, socket;
+    var socket;
 
     socket = io.connect( '/chat' );
+
     return {
-      emit : function ( event, data ) {
+      socket : socket,
+      emit   : function ( event, data ) {
         socket.emit( event, data );
       },
-      on : function ( event, callback ) {
+      on     : function ( event, callback ) {
         socket.on( event, function (){
           callback( arguments );
         });
@@ -42,6 +44,7 @@ spa.data = (function (){
 
   clearSio = function (){
     if ( stateMap.sio ){
+      stateMap.sio.socket.disconnect();
       stateMap.sio = null;
       return true;
     }

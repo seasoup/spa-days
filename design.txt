@@ -9,10 +9,12 @@ itself should not be tied to any DOM elements.
 Our model exports a people object and a chat object.  These are
 used by the feature modules to inform the model of changes, for example:
 
-  spa.model.people.make_user( <user_name> );
+  spa.model.people.login( <user_name> );
   spa.model.chat.join();
   spa.model.chat.set_chatee( <chatee.id> );
   spa.model.chat.send_msg( ... );
+  // .. later
+  spa.model.people.logout();
 
 Our data is bound using jQuery global events.  All our events
 are namespaced with an 'spa-' prefix.

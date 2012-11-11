@@ -224,11 +224,11 @@ spa.shell = (function () {
   onTapAcct = function ( event ){
     var acct_text, user_name, user = spa.model.people.get_user();
     if ( user.is_anon() ){
-      user_name = prompt( "What's your name?" );
-      spa.model.people.make_user( user_name );
+      user_name = prompt( 'Please login' );
+      spa.model.people.login( user_name );
     }
     else {
-     spa.model.people.remove_user();
+     spa.model.people.logout();
     }
     return false;
   };
