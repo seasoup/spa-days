@@ -18,14 +18,9 @@
 var spa = (function () {
   "use strict";
   var initModule = function ( $container ){
-    // try {
-      spa.data.initModule();
-      spa.model.initModule();
-      spa.shell.initModule( $container );
-    //}
-    // catch ( error ) {
-    //  console.trace('spa.js caught exception', error );
-    // }
+    spa.data.initModule();
+    spa.model.initModule();
+    spa.shell.initModule( $container );
   };
   return { initModule: initModule };
 }());

@@ -16,7 +16,7 @@ spa.data = (function (){
   "use strict";
   var
     stateMap = { sio : null },
-    makeSio, getSio, clearSio, initModule
+    makeSio, getSio, initModule
     ;
 
   makeSio = function (){
@@ -42,20 +42,10 @@ spa.data = (function (){
     return stateMap.sio;
   };
 
-  clearSio = function (){
-    if ( stateMap.sio ){
-      stateMap.sio.socket.disconnect();
-      stateMap.sio = null;
-      return true;
-    }
-    return false;
-  };
-
   initModule = function (){};
 
   return {
     getSio     : getSio,
-    clearSio   : clearSio,
     initModule : initModule
   };
 }());

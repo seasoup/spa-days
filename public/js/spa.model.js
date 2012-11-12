@@ -21,7 +21,8 @@ spa.model = (function (){
       people_db      : TAFFY(),
       people_cid_map : {},
       anon_user      : null,
-      cid_serial     : 0
+      cid_serial     : 0,
+      is_connected   : false
     },
 
     personProto, makeCid, people, chat, initModule;
@@ -126,7 +127,6 @@ spa.model = (function (){
       stateMap.user = stateMap.anon_user;
 
       $.event.trigger( 'spa-logout', [ user ] );
-      spa.data.clearSio();
       return is_removed;
     };
 
@@ -144,10 +144,7 @@ spa.model = (function (){
 
   chat = (function () {
     var
-      chatee,
-
-      trigger_listchange, trigger_updatechat,
-      trigger_disconnect,
+      chatee, trigger_listchange, trigger_updatechat,
 
       get_chatee, join_chat, _leave_chat, send_msg,
       set_chatee, update_avatar, update_list;
@@ -256,13 +253,12 @@ spa.model = (function (){
       $.event.trigger( 'spa-updatechat', [ msg_map ] );
     };
 
-//    trigger_disconnect = function ( arg_list ){
-//      spa.data.clearSio();
-//    };
-
     join_chat  = function () {
       var sio;
-      if ( stateMap.user.is_anon() ){
+
+      if ( stateMap.is_connected ){ return; }
+      
+      if ( stateMap.user.is_anon() ){ 
         console.warn( 'User must be defined before joining chat');
         return false;
       }
@@ -270,7 +266,7 @@ spa.model = (function (){
       sio = spa.data.getSio();
       sio.on( 'listchange', trigger_listchange );
       sio.on( 'updatechat', trigger_updatechat );
-//      sio.on( 'disconnect', trigger_disconnect );
+      stateMap.is_connected = true;
     };
 
     return {
